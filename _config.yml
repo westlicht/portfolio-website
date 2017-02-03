@@ -64,6 +64,16 @@ pagination_dir: page
 ## Themes: https://hexo.io/themes/
 theme: portfolio
 
+# Thumbnails
+thumbnails:
+  masks:
+    - "posts/*.jpg"
+  profiles:
+    thumb:
+      resize:
+        - 600
+        - 400
+
 # Autoprefixer
 autoprefixer:
   exclude:

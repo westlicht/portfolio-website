@@ -33,5 +33,6 @@ hexo.extend.tag.register('youtube', function(args) {
 
 
 hexo.extend.helper.register('teaser_image_path', function(item) {
-  return item.path + item.path.replace(/\/$/, "") + '.jpg';
+  // return item.path + item.path.replace(/\/$/, "") + '.jpg';
+  return item.path + 'thumb-' + item.path.replace(/\/$/, "") + '.jpg';
 });
