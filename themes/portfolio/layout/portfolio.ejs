@@ -1,0 +1,5 @@
+<section>
+  <% site.posts.sort("date", "desc").each(function(item){ %>
+    <%- partial('_partial/project', {item: item}) %>
+  <% }); %>
+</section>

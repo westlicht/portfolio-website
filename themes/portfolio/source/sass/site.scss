@@ -1,0 +1,423 @@
+@charset "utf-8";
+@import url('https://fonts.googleapis.com/css?family=Lato');
+// @import "normalize";
+@import "skeleton.css";
+@import "font-awesome.min.css";
+
+$color-background: #fff;
+$color-text: #000;
+
+$color-icon: #aaa;
+
+$color-nav: #aaa;
+$color-nav-active: #000;
+$color-nav-hover: lighten(#007bb5, 10);
+
+$color-link: #007bb5;
+$color-link-hover: lighten(#007bb5, 10);
+
+body {
+  background: $color-background;
+  color: $color-text;
+  font-size: 1.5em;
+  overflow-y: scroll;
+
+  font-family: "Lato", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  text-align: justify;
+}
+
+img {
+  -webkit-box-shadow: 0px 0px 15px 0px rgba(0,0,0,0.25);
+  -moz-box-shadow: 0px 0px 15px 0px rgba(0,0,0,0.25);
+  box-shadow: 0px 0px 15px 0px rgba(0,0,0,0.25);
+}
+
+/* Typography */
+
+// h1 {
+//   text-align: center;
+//   text-transform: uppercase;
+//   // font-size: 2em;
+//   // text-shadow: 0 2px 5px rgba(0,0,0,0.25);
+//   /*padding-bottom: 1em;*/
+// }
+//
+// h2,h3,h4,h5,h6 {
+//   text-align: center;
+// }
+
+// h1::first-letter {
+//   // font-size: 1.2em;
+// }
+
+.blocktext {
+  text-align: justify;
+}
+
+/* Lists */
+
+ul {
+  margin-left: 2rem;
+  list-style: disc outside; }
+ol {
+  list-style: decimal inside; }
+ol, ul {
+  padding-left: 0;
+  margin-top: 0; }
+ul ul,
+ul ol,
+ol ol,
+ol ul {
+  margin: 1.5rem 0 1.5rem 3rem;
+  font-size: 90%; }
+li {
+  margin-bottom: 0rem; }
+
+/* Header */
+
+header {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 0.125rem solid $color-icon;
+
+  .wrapper {
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .title {
+    font-size: 3rem;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 0 0.5rem;
+  }
+
+  .title::first-letter {
+    font-size: 3.5rem;
+    text-transform: uppercase;
+  }
+
+  .icons {
+    display: block;
+
+    ul {
+      list-style: none;
+      margin: 0;
+    }
+
+    li {
+      float: left;
+      padding: 1rem 0.5rem;
+    }
+
+    a {
+      i {
+        display: block;
+        text-align: center;
+        font-size: 2rem;
+        line-height: 3rem;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.5rem;
+        background-color: $color-icon;
+        color: $color-background;
+      }
+
+      i.fa-linkedin:hover {
+        background: #007bb5;
+      }
+      i.fa-facebook:hover {
+        background: #3b5998;
+      }
+      i.fa-github:hover {
+        background: #333;
+      }
+      i.fa-instagram:hover {
+        background: #cd486b;
+      }
+      i.fa-youtube-play:hover {
+        background: #bb0000;
+      }
+      i.fa-envelope:hover {
+        background: $color-link-hover;
+      }
+    }
+  }
+
+  nav {
+    ul {
+      display: flex;
+      flex-flow: row;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+
+      font-size: 1.5rem;
+      margin: auto;
+    }
+
+    li {
+      display: block;
+      padding: 1rem .5rem;
+    }
+
+    a {
+      display: block;
+      font-weight: normal;
+      text-decoration: none;
+      text-transform: uppercase;
+      color: $color-nav;
+
+      &::first-letter {
+        font-size: 1.8rem;
+        text-transform: uppercase;
+      }
+
+      &.active {
+        color: $color-nav-active;
+      }
+    }
+  }
+}
+
+@media (max-width: 750px) {
+
+  header {
+    .wrapper {
+      justify-content: space-around;
+    }
+    nav {
+      ul {
+        justify-content: space-around;
+        li {
+          margin: auto;
+        }
+      }
+    }
+  }
+}
+
+/* Footer */
+
+footer {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  border-top: 0.125em solid black;
+  text-align: center;
+}
+
+/* Main */
+
+main {
+  padding: 2rem 0;
+}
+
+/* Home */
+
+.home {
+
+  // min-height: 200px;
+
+  .portrait {
+    display: block;
+    width: 100%;
+    max-width: 190px;
+
+    margin-right: 1rem;
+
+    // border-radius: 2rem;
+    margin-left: auto;
+    margin-right: auto;
+
+    box-shadow: none;
+  }
+
+  p {
+    // text-align: justify;
+  }
+
+}
+
+@media (min-width: 550px) {
+  .home {
+    .portrait {
+      float: right;
+      margin-left: 1rem;
+      margin-right: 0;
+      margin-top: 6rem;
+
+
+    }
+  }
+}
+
+/* Project */
+
+.project {
+  h2 {
+    text-align: center;
+  }
+  p {
+    text-align: center;
+  }
+
+}
+
+@media (min-width: 550px) {
+  .project {
+  }
+}
+
+
+/* Post */
+
+.post {
+  h1 {
+    text-align: center;
+    // text-transform: uppercase;
+  }
+
+  h2,h3,h4,h5,h6 {
+    text-align: center;
+  }
+
+  p {
+    // text-align: justify;
+  }
+
+  img.center {
+    display: block;
+    margin: 0 auto;
+  }
+}
+
+/* Youtube player */
+
+.caption {
+  text-align: center;
+}
+
+.youtube {
+  position: relative;
+  cursor: pointer;
+  padding-bottom: 56.25%;
+}
+
+.youtube img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+}
+
+.youtube .play {
+  background: url('play.png') no-repeat center center;
+  background-size: 64px 64px;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  opacity: .5;
+  filter: alpha(opacity=50);
+  transition: all 0.2s ease-out;
+}
+
+.youtube .play:hover {
+  opacity: 1;
+  filter: alpha(opacity=100);
+}
+
+.youtube .player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Resume */
+
+.resume {
+  position: relative;
+  width: 100%;
+}
+
+.resume .section {
+  font-size: 1.5em;
+  text-align: center;
+  margin-top: 30px;
+}
+
+.resume .row {
+  position: relative;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.resume .key {
+  font-weight: bold;
+  text-align: left;
+}
+
+.resume .value {
+  text-align: left;
+}
+
+.resume .value-only {
+  text-align: left;
+}
+
+.resume hr {
+  border: 0;
+  height: 1px;
+  background: #333;
+  background-image: linear-gradient(to right, #ccc, #333, #ccc);
+  margin: 0 auto;
+  margin-bottom: 30px;
+}
+
+.resume ul {
+  margin-top: 0.5em;
+}
+
+.resume li {
+  margin: 0 auto;
+}
+
+@media (min-width: 400px) {
+  .resume .key {
+    font-weight: bold;
+    text-align: right;
+    float: left;
+    width: 25%;
+  }
+
+  .resume .value {
+    text-align: left;
+    float: left;
+    margin-left: 5%;
+    width: 70%;
+  }
+
+  .resume .value-only {
+    text-align: left;
+    float: left;
+    margin-left: 30%;
+    width: 70%;
+  }
+}
+
+/* Links */
+a {
+  color: $color-link;
+  // color: blue;
+  font-weight: bold;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-link-hover;
+  }
+}

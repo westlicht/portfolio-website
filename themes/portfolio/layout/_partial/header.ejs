@@ -1,0 +1,41 @@
+<header>
+  <div class="wrapper">
+    <div class="title">Simon Kallweit</div>
+    <div class="icons">
+      <ul>
+        <% if (theme.linkedin_url) { %>
+          <li><a href="<%- theme.linkedin_url %>"><i class="fa fa-linkedin"></i></a></li>
+        <% } %>
+        <% if (theme.facebook_url) { %>
+          <li><a href="<%- theme.facebook_url %>"><i class="fa fa-facebook"></i></a></li>
+        <% } %>
+        <% if (theme.instagram_url) { %>
+          <li><a href="<%- theme.instagram_url %>"><i class="fa fa-instagram"></i></a></li>
+        <% } %>
+        <% if (theme.github_url) { %>
+          <li><a href="<%- theme.github_url %>"><i class="fa fa-github"></i></a></li>
+        <% } %>
+        <% if (theme.youtube_url) { %>
+          <li><a href="<%- theme.youtube_url %>"><i class="fa fa-youtube-play"></i></a></li>
+        <% } %>
+        <% if (theme.email_url) { %>
+          <li><a href="<%- theme.email_url %>"><i class="fa fa-envelope"></i></a></li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+
+  <nav>
+    <ul>
+      <% for (var i in theme.menu) { %>
+        <li>
+          <% if (page.nav == theme.menu[i].id) { %>
+            <a class="active" href="<%= url_for(theme.menu[i].url) %>"><%= theme.menu[i].title %></a>
+          <% } else { %>
+            <a href="<%= url_for(theme.menu[i].url) %>"><%= theme.menu[i].title %></a>
+          <% } %>
+        </li>
+      <% } %>
+    </ul>
+  </nav>
+</header>

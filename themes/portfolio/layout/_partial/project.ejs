@@ -1,0 +1,13 @@
+<div class="project">
+  <div class="row">
+    <div class="one-half column">
+      <a href="<%= url_for(item.path) %>"><img class="u-max-full-width" src="<%= url_for(teaser_image_path(item)) %>" /></a>
+    </div>
+    <div class="one-half column">
+      <h2><%= item.title %></h2>
+      <p><%- markdown(item.summary) %></p>
+      <center><a class="button" href="<%= url_for(item.path) %>">Read more</a></center>
+    </div>
+  </div>
+  <hr>
+</div>

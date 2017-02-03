@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Image Synthesis 2014 - Final Project Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="title" content="Image Synthesis - Final Project Report">
+    <meta name="author" content="Simon Kallweit <kalsimon@student.ethz.ch>">
+
+    <!-- Zimit -->
+    <link rel="stylesheet" type="text/css" href="css/zimit.css">
+    <!-- Custom style -->
+    <link rel="stylesheet" type="text/css" href="css/docs.css">
+    <!-- Rainbow -->
+    <link rel="stylesheet" type="text/css" href="css/vendor/rainbow.css">
+  </head>
+  <body>
+
+    <header class="fix">
+      <nav>
+        <a class="site" href="./index.html">Image Synthesis 2014</a>
+        <ul id="menu">
+          <li><a href="mailto:kalsimon@student.ethz.ch">Simon Kallweit</a>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+
+<!--
+      <div class="row fix">
+        <div class="c3 menu-left">
+          <ul>
+            <li><a href="#inspiration">Inspiration <icon>right</icon></a>
+            <li><a href="#simpleFeatures">Simple Features <icon>right</icon></a>
+            <li><a href="#mediumFeatures">Medium Features <icon>right</icon></a>
+            <li><a href="#advancedFeatures">Advanced Features <icon>right</icon></a>
+          </ul>
+        </div>
+      </div>
+      -->
+
+      <div class="row">
+        <div class="c12">
+          <section class="top">
+            <h1>Final Project Report</h1><wbr><h5>&ldquo;That belongs in a museum&rdquo;</h5>
+          </section>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c12">
+          <section class="top" id="inspiration">
+            <h2>Inspiration</h2>
+          </section>
+          <hr>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c12">
+        <img src="image1.jpg"/>
+        <img src="image4.jpg"/>
+        <img src="image6.jpg"/>
+        <p>
+        The goal for the final project is to create an image of an old camera, or an old typewriting machine (depending on what models will be available). A lot of effort will be put into creating believable materials, that have an old/dusty/used look. Also, the image should have a very photographic look, which is achieved by using physical camera model with a shallow depth of field. If render times permit, the space around the model could be filled with a inhomogeneous participating medium, to suggest a hint of dust in the air.
+        </p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c12">
+          <section class="top" id="overview">
+            <h2>Overview</h2>
+          </section>
+          <hr>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c11">
+          <p>
+            Due to lack of inspiration, I named my renderer skr (guess what it stands for). Apart from the math code provided in the course framework, the renderer has pretty much been written from scratch. The software design is inspired both from <a href="https://github.com/mmp/pbrt-v2">pbrt2</a> and from the very excellent <a href="http://www.mitsuba-renderer.org/">Mitsuba</a> renderer. I have also used Mitsuba to do correctness comparisons where applicable.
+          </p>
+
+
+          <h6>Thirdparty Libraries</h6>
+          <p>
+            The rendering framework builds upon the following thirdparty libraries:
+            <ul>
+              <li><a href="http://qt-project.org/">Qt 5.2</a> for the GUI</li>
+              <li><a href="http://people.cs.kuleuven.be/~ares.lagae/libpic/">libpic</a> for loading/saving HDR images</li>
+              <li><a href="http://www.openexr.com/">OpenEXR</a> for loading/saving EXR images</li>
+              <li><a href="http://lodev.org/lodepng/">lodepng</a> for loading/saving PNG images</li>
+              <li><a href="http://www.nothings.org/stb_image.c">stb_image</a> for loading JPEG images</li>
+              <li><a href="http://embree.github.io/">embree2</a> for efficient BVH acceleration structure</li>
+              <li><a href="http://pugixml.org/">pugixml</a> for parsing/generating XML scene files</li>
+              <li><a href="https://github.com/motonacciu/meta-serialization">serialize</a> for serializing binary data</li>
+              <li><a href="https://github.com/cxong/tinydir">tinydir</a> for listing directories (cross-platform)</li>
+              <li><a href="https://github.com/c42f/tinyformat">tinyformat</a> for typesafe printf-style string formatting in C++</li>
+              <li><a href="https://github.com/syoyo/tinyobjloader">TinyObjLoader</a> for loading Wavefront OBJ files</li>
+            </ul>
+          </p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c12">
+          <section class="top" id="simpleFeatures">
+            <h2>Simple Features</h2>
+          </section>
+          <hr>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c11">
+          <h6>GUI</h6>
+          <p>
+            For improved usability of the renderer, especially with respect to the rendering competition, which would require quite a bit of tweaking, I decided to build a GUI to enable simple scene editing and parameter editing. The GUI is completely decoupleded from the rendering core, so it should be easy to build a standalone commandline based renderer at a later point. The GUI is built on top of the <a href="http://qt-project.org/">Qt 5.2</a> library and implements the following functionality:
+            <ul>
+              <li>Loading, saving, merging scenes</li>
+              <li>Importing Wavefront OBJ geometry</li>
+              <li>OpenGL based preview with interactive camera placement</li>
+              <li>Scene hierarchy view showing all the objects in the scene (Cameras, Lights, Objects, Materials etc.)
+              <li>Object inspector showing all parameters of a selected object for tweaking</li>
+              <li>Render view with zooming/panning and interactive exposure and gamma controls</li>
+            </ul>
+            <img src="gui.png"/>
+          </p>
+          <p><icon>file</icon><samp>GUI/*</samp></p>
+
+
+          <h6>Image I/O</h6>
+          <p>
+            In order to support various image formats, the following libraries have been integrated into the framework:
+            <ul>
+              <li>HDR (read/write) - <a href="http://people.cs.kuleuven.be/~ares.lagae/libpic/">libpic</a></li>
+              <li>EXR (read/write) - <a href="http://www.openexr.com/">OpenEXR</a></li>
+              <li>PNG (read/write) - <a href="http://lodev.org/lodepng/">lodepng</a></li>
+              <li>JPEG (read-only) - <a href="http://www.nothings.org/stb_image.c">stb_image</a></li>
+            </ul>
+          </p>
+          <p><icon>file</icon><samp>Core/Image.h, Core/Image.cpp</samp></p>
+
+
+          <h6>Acceleration Structure</h6>
+          <p>
+            In the beginning, the framework used an adapted version of the BVH code from <a href="https://github.com/mmp/pbrt-v2/blob/master/src/accelerators">pbrt2</a>. To improve performance at a later stage in the project, I switched to Intel's <a href="http://embree.github.io/">embree2</a> library, which is a highly optimized BVH implementation. This resulted in an overall speedup of over a factor 2x. During ray/scene intersections, two BVH instances are used, one to handle analytic primitive shapes such as spheres, planes etc., and a second one to handle triangle meshes. For simplicity and improved performance, all triangle meshes are transformed to world coordinates and put into the same BVH. The current implementation uses the pbrt2 adapted BVH for primitive shapes and the embree BVH for triangle meshes. For each ray/scene intersection (<code>Scene::intersect</code>), both BVHs are queried and the nearer hitpoint is returned. Due to the abstract interfaces <code>Accel</code> and <code>TriangleAccel</code>, it should be easy to extend the framework with additional acceleration structures.
+          </p>
+          <p><icon>file</icon><samp>Core/Scene.cpp, Core/Accel.h, Accel/*</samp></p>
+
+
+          <h6>Physical Camera</h6>
+          <p>
+            In order to create realistic renderings we need a realistic camera model. As a hobby photographer, I like to think in terms of sensor size, focal length and f-stops to control the camera. This is represented in the renderer by exposing a camera model with said properties. Using simple equations, we can then easily compute the required values used to generate primary rays in the renderer. First, we can calculate the field of view using the following equation:
+            <p><center><img src="eq-focal-length-to-fov.png"/></center></p>
+            Also, we can calculate the size of the aperture using a second equation:
+            <p><center><img src="eq-aperture.png"/></center></p>
+            The following images show comparisons between real photongraphs and renderings with various f-stop settings.
+          </p>
+          <div class="imagebox"><img src="canon-f8.jpg"/>
+            <div class="details"><p>Canon 5D with 50mm f/8</p></div>
+          </div>
+          <div class="imagebox"><img src="dof-f8.png"/>
+            <div class="details"><p>skr 50mm f/8</p></div>
+          </div>
+          <div class="imagebox"><img src="canon-f4.jpg"/>
+            <div class="details"><p>Canon 5D with 50mm f/4</p></div>
+          </div>
+          <div class="imagebox"><img src="dof-f4.png"/>
+            <div class="details"><p>skr 50mm f/4</p></div>
+          </div>
+          <div class="imagebox"><img src="canon-f2.jpg"/>
+            <div class="details"><p>Canon 5D with 50mm f/2</p></div>
+          </div>
+          <div class="imagebox"><img src="dof-f2.png"/>
+            <div class="details"><p>skr 50mm f/2</p></div>
+          </div>
+          <div class="imagebox"><img src="canon-f1.4.jpg"/>
+            <div class="details"><p>Canon 5D with 50mm f/1.4</p></div>
+          </div>
+          <div class="imagebox"><img src="dof-f1.4.png"/>
+            <div class="details"><p>skr 50mm f/1.4</p></div>
+          </div>
+          <p>
+          For artistic control, I have implemented a few additional features into the camera model. First, we can use a circular or rotated n-gon shape for aperture sampling. This allows controlling the appearance of the bokeh. The images above were rendered using a circular aperture, the images below are rendered with a 5 bladed aperture. Also, using an aperture bias parameter, samples taken in the aperture sampling routine can be shifted towards the edge or the center of the aperture. This is shown in the image below. Also, I have experimented with a simple trick to render the "cat's eyes" effect, by adding a virtual aperture between the the sensor and the front lens, in order to reject samples towards the edge of the lens. This results in the "cat's eyes" effect shown below. Note that at the same time, we also get vignetting, due to some of the light lost towards the edge of the lens.
+          </p>
+          <div class="imagebox"><img src="dof-bias.png"/>
+            <div class="details"><p>Aperture bias (0.0, 0.1, 0.2, 0.5 from left to right)</p></div>
+          </div>
+          <div class="imagebox"><img src="dof-catseye.png"/>
+            <div class="details"><p>"Cat's eyes" effect</p></div>
+          </div>
+          <p>
+            Creating camera rays is implemented in <code>ThinLens::sampleRay</code>. The aperture sampling is implemented in <code>ThinLens::sampleAperture</code>.
+          </p>
+          <p><icon>file</icon><samp>Sensor/ThinLens.cpp</samp></p>
+
+
+          <h6>Mesh Lights</h6>
+          <p>
+            To allow for light sources of arbitrary shape, I have implemented diffuse area lights, which can sample from any of the implemented shapes. This also includes support for sampling from triangle meshes. The implementation builds upon the sampling interface provided by the <code>Shape</code> class, especially <code>sampleDirect</code> and <code>pdfDirect</code>, which implement sampling with respect to solid angle from a given reference point, and allow shapes to either use area based sampling together with domain transformation or directly sample with respect to solid angle. For mesh lights, we sample the mesh surface with respect to area and then use domain transformation. The area sampling first selects a triangle using the <code>DiscretePdf1D</code> class and then samples the choosen triangle uniformly.
+          </p>
+          <div class="imagebox"><img src="mesh-lights-1.png"/>
+          </div>
+          <div class="imagebox"><img src="mesh-lights-2.png"/>
+          </div>
+          <p>
+            For verification I have rendered a simple scene with a sphere light and compared it to a scene with a spherical mesh light. The comparison also shows the superiority of the sphere light sampling, resulting in much reduced variance compared to the mesh light. The difference image on the right clearly shows that lighting profiles are identical and the only difference is in the silhouette of the analytic sphere compared to the mesh sphere.
+          </p>
+          <div class="imagebox"><img src="meshlight-comp.png"/>
+            <div class="details"><p>Left: Sphere light / Right: Mesh light (128 spp)</p></div>
+          </div>
+          <div class="imagebox"><img src="meshlight-diff.png"/>
+            <div class="details"><p>Difference between sphere light and mesh light (1024 spp)</p></div>
+          </div>
+          <p><icon>file</icon><samp>Emitter/Area.cpp, Shape/Mesh.cpp, Core/DiscretePdf.h</samp></p>
+
+
+          <h6>Image Based Lighting</h6>
+          <p>
+            To allow for natural and realistic lighting, I have implemented lighting from HDR envrionment maps. In order to reduce variance, importance sampling as described in <a href="#ref1">[1]</a> was implemented. The following two images show the same scene rendered with and without importance sampling. The first showing the superiority of importance sampling by comparing visually, the second showing the difference between fully converged images, demonstrating correctness of the importance sampling. The third image shows a visualization of the importance sampling scheme.
+          </p>
+          <div class="imagebox"><img src="envmap-comp.png"/>
+            <div class="details"><p>Left: Without IS / Right: With IS (64 spp)</p></div>
+          </div>
+          <div class="imagebox"><img src="envmap-diff.png"/>
+            <div class="details"><p>Difference between disabled/enabled IS (4096 spp)</p></div>
+          </div>
+          <div class="imagebox"><img src="envmap-pdf.png"/>
+            <div class="details"><p>Visualization of the PDF generated from the luminance of the environment map and a set of importance sampled points</p></div>
+          </div>
+          <p><icon>file</icon><samp>Emitter/EnvMap.cpp, Core/DiscretePdf.h</samp></p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c12">
+          <section class="top" id="mediumFeatures">
+            <h2>Medium Features</h2>
+          </section>
+          <hr>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c11">
+          <p>
+            For my medium features, I mainly focused on rendering realistic materials, which would greatly help in creating the final image. This required the implementation of various BSDFs as well as a flexible texturing system. In order to test the BSDFs, I created a material test scene which I used to compare the results from skr with references from Mitsuba.
+          </p>
+
+
+          <h6>BSDFs</h6>
+          <p>
+            All BSDFs inherit from the common base class <code>BSDF</code>. As most BSDFs have multiple lobes (reflection, transmission etc.), they hold a list of components (lobes) and expose a lobe signature described using the <code>EBSDFType</code> enum. Each BSDF has to implement 3 basic methods:
+            <ul>
+              <li><code>BSDF::sample</code> samples an exitant direction, given an incident direction and a set of requested lobes. Returns the value of the BSDF divided by the PDF (for improved efficiency and numerical stability), pre-multiplied with the foreshortening term.</li>
+              <li><code>BSDF::eval</code> evaluates the BSDF given an incident/exitant direction, a set of lobes and a measure. Returns the value of the BSDF pre-multiplied with the foreshortening term.</li>
+              <li><code>BSDF::pdf</code> computes the PDF given an incident/extiant direction, a set of lobes and a measure.</li>
+            </ul>
+            All three functions take a <code>BSDFQuery</code> object as an argument, which holds, depending on the type of query, an incident direction, an exitant direction, and a set of requested lobes. When performing sampling, the sampled component is stored in the query object for later use. The measure argument specifies if the BSDF is evaluated with respect to solid angle or with respect to a discrete measure, used in lobes that describe a delta distribution.
+          </p>
+          <p><icon>file</icon><samp>Core/BSDF.h, Core/BSDF.cpp</samp></p>
+
+
+          <h6>Diffuse</h6>
+          <p>
+            Implements the diffuse lambert BRDF using cosine-weighted sampling.
+          </p>
+          <div class="imagebox"><img src="mat2-diffuse-skr.png"/>
+            <div class="details"><p>Diffuse BRDF rendered with skr</p></div>
+          </div>
+          <div class="imagebox"><img src="mat2-diffuse-mitsuba.png"/>
+            <div class="details"><p>Diffuse BRDF rendered with Mitsuba</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/Diffuse.cpp</samp></p>
+
+
+          <h6>Dielectric</h6>
+          <p>
+            Implements a dielectric BSDF using the fresnel equations to model the interface between two dielectrics. The implementation uses russian roulette to decide between reflecting a ray and transmitting a ray, with a probability based on the fresnel reflectance computed in <code>fresnelDielectricAuto</code>.
+          </p>
+          <div class="imagebox"><img src="mat2-dielectric-skr.png"/>
+            <div class="details"><p>Dielectric BSDF rendered with skr</p></div>
+          </div>
+          <div class="imagebox"><img src="mat2-dielectric-mitsuba.png"/>
+            <div class="details"><p>Dielectric BSDF rendered with Mitsuba</p></div>
+          </div>
+          <p><icon>file</icon><samp>Core/Fresnel.h, BSDF/Dielectric.cpp</samp></p>
+
+
+          <h6>Conductor</h6>
+          <p>
+            Implements a conductor BRDF using the fresnel equations to model the interface between a dielectric and a conductor. The implementation uses the exact fresnel equations implemented in <code>fresnelConductorExact</code>, which are described in <a href="#ref4">[4]</a>. For physically plausible materials, the BSDF can be configured to use measured index of refraction data found in Mitsuba. The wavelength dependent eta and k values describing the index of refraction are convolved with the CIE curves to get RGB coefficients.
+          </p>
+          <div class="imagebox"><img src="mat2-conductor-skr.png"/>
+            <div class="details"><p>Conductor BRDF (copper) rendered with skr</p></div>
+          </div>
+          <div class="imagebox"><img src="mat2-conductor-mitsuba.png"/>
+            <div class="details"><p>Conductor BRDF (copper) rendered with Mitsuba</p></div>
+          </div>
+          <p><icon>file</icon><samp>Core/Fresnel.h, Core/Spectrum.h, Core/Spectrum.cpp, Core/MaterialProperties.h, Core/MaterialProperties.cpp, BSDF/Conductor.cpp</samp></p>
+
+
+          <h6>Phong</h6>
+          <p>
+            Implements the modified phong model. I didn't really use this BRDF for anything due to it's lack of realism.
+          </p>
+          <div class="imagebox"><img src="mat2-phong-skr.png"/>
+            <div class="details"><p>Phong BRDF rendered with skr</p></div>
+          </div>
+          <div class="imagebox"><img src="mat2-phong-mitsuba.png"/>
+            <div class="details"><p>Phong BRDF rendered with Mitsuba</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/Phong.cpp</samp></p>
+
+
+          <h6>Rough Diffuse</h6>
+          <p>
+            Implements the Oren-Nayer BRDF as described in <a href="#ref2">[2]</a>. For simplicity, I only implemented the <i>Qualitative Model</i> as described in section 4.4 in the paper. For compatibility to Mitsuba, I also included the conversion factor to get a sigma for the Oren-Nayer model which behaves similarly to the roughness value in the Beckmann distribution (see below):
+            <p><center><img src="eq-oren-nayer-factor.png"/></center></p>
+            The images below show the rough diffuse BRDF using a roughness of 0.4:
+          </p>
+          <div class="imagebox"><img src="mat2-rough-diffuse-skr.png"/>
+            <div class="details"><p>Rough Diffuse BRDF rendered with skr</p></div>
+          </div>
+          <div class="imagebox"><img src="mat2-rough-diffuse-mitsuba.png"/>
+            <div class="details"><p>Rough Diffuse BRDF rendered with Mitsuba</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/RoughDiffuse.cpp</samp></p>
+
+
+          <h6>Microfacet BSDFs</h6>
+          <p>
+            In order to model rough dielectrics and conductors, I have implemented rough BSDFs as described in <a href="#ref2">[3]</a>. The paper gives a full overview for the implementation of microfacet BSDFs for dielectrics and conductors. As a first step, I have implemented the micro facet distributions that describe the statistical distribution of surface normals. The paper describes 3 distributions, namely <i>Beckmann</i>, <i>GGX</i> and <i>Phong</i>. All of them are described in section 5.2 of the paper and are implemented in the <code>MicrofacetDistribution</code> class. This class provides an interface to sample a normal, evaluate the distribution, compute the PDF of the micro normal and compute the shadowing term:
+            <ul>
+              <li><code>sample</code> samples a micro normal given a roughness value</li>
+              <li><code>eval</code> evaluates the distribution given a roughness value and a micro normal</li>
+              <li><code>pdf</code> evaluates the PDF of the distribution given a roughness value and a micro normal</li>
+              <li><code>G</code> computes the shadowing term given a roughness value, an incident/exitant direction and a micro normal</li>
+            </ul>
+          </p>
+          <p><icon>file</icon><samp>BSDF/Microfacet.h</samp></p>
+
+
+          <h6>Rough Dielectric</h6>
+          <p>
+            Implements a rough dielectric as described in equations 19, 20 and 21 in <a href="#ref3">[3]</a>. Uses the <code>MicrofacetDistribution</code> class to sample and evaluate the microfacet distribution. Analogous to the smooth dielectric BSDF, <code>fresnelDielectricAuto</code> is used to compute the fresnel reflectance coefficient as well as the refracted direction. To prevent extremely huge weights, I have also applied the <i>lobe widening</i> trick described in section 5.3.
+          </p>
+          <div class="imagebox"><img src="mat2-rough-dielectric-skr.png"/>
+            <div class="details"><p>Rough Dielectric BRDF rendered with skr</p></div>
+          </div>
+          <div class="imagebox"><img src="mat2-rough-dielectric-mitsuba.png"/>
+            <div class="details"><p>Rough Dielectric BRDF rendered with Mitsuba</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/RoughDielectric.cpp</samp></p>
+
+
+          <h6>Rough Conductor</h6>
+          <p>
+            Implements a rough conductor as described in equation 20 in <a href="#ref3">[3]</a>. Uses the <code>MicrofacetDistribution</code> class to sample and evaluate the microfacet distribution. Analogous to the smooth conductor BRDF, <code>fresnelConductorExact</code> is used to compute the fresnel reflectance coefficient.
+          </p>
+          <div class="imagebox"><img src="mat2-rough-conductor-skr.png"/>
+            <div class="details"><p>Rough Conductor BRDF rendered with skr</p></div>
+          </div>
+          <div class="imagebox"><img src="mat2-rough-conductor-mitsuba.png"/>
+            <div class="details"><p>Rough Conductor BRDF rendered with Mitsuba</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/RoughConductor.cpp</samp></p>
+
+
+          <h6>Plastic</h6>
+          <p>
+            Implements a plastic like material. A fresnel dielectric boundary is used to reflect light. The transmitted light is then assumed to diffusly reflect on the lambertian base layer and refract back through the dielectric boundary. Based on the implementation found in Mitsuba.
+          </p>
+          <div class="imagebox"><img src="mat2-plastic-skr.png"/>
+            <div class="details"><p>Plastic BRDF rendered with skr</p></div>
+          </div>
+          <div class="imagebox"><img src="mat2-plastic-mitsuba.png"/>
+            <div class="details"><p>Plastic BRDF rendered with Mitsuba</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/Plastic.cpp</samp></p>
+
+
+          <h6>Diffuse Transmission</h6>
+          <p>
+            Due to input from Marios, I also implemented a diffuse transmission BTDF, which can be used to model the shading of a sheet of paper. It basically identical to the lambert diffuse BRDF, but mirrors the exitant direction to the other side of the shading frame.
+          </p>
+          <div class="imagebox"><img src="mat2-diffuse-transmission-skr.png"/>
+            <div class="details"><p>Diffuse Transmission BTDF rendered with skr</p></div>
+          </div>
+          <div class="imagebox"><img src="mat2-diffuse-transmission-mitsuba.png"/>
+            <div class="details"><p>Diffuse Transmission BTDF rendered with Mitsuba</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/DiffuseTransmission.cpp</samp></p>
+
+
+          <h6>Mixing</h6>
+          <p>
+            For more complex materials, it is useful to mix various BSDFs given an alpha texture. This is implemented in the mix BSDF.
+          </p>
+          <div class="imagebox"><img src="mat2-mix-skr.png"/>
+            <div class="details"><p>Mixing between rough conductor and diffuse BRDF</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/Mix.cpp</samp></p>
+
+
+          <h6>Bump Mapping</h6>
+          <p>
+            For adding small perturbations into materials, I have implement a bump mapping BSDF, which basically just perturbs the shading frame and hands the sampling/evaluation to the nested BSDF. The perturbation of the frame is implemented as described in section 9.3 in the pbrt2 book. For simplicity and diminishing contribution, I left out the terms associated with the surface normal's derivative.
+          </p>
+          <div class="imagebox"><img src="mat2-bump-skr.png"/>
+            <div class="details"><p>Diffuse BRDF with a perlin FBM bump map</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/Bump.cpp</samp></p>
+
+
+          <h6>Texturing</h6>
+          <p>
+            I have implemented a basic texturing system to allow for spatially varying properties on surfaces. All texture classes inherit from the <code>Texture</code> baseclass and implement the <code>eval</code> and <code>evalMono</code> methods. I have implemented the following texture classes:
+            <ul>
+              <li><code>Bitmap</code> loading images from files</li>
+              <li><code>Checkerboard2D</code> procedural 2D checkerboard</li>
+              <li><code>Constant</code> constant color</li>
+              <li><code>Grid2D</code> procedural 2D grid</li>
+              <li><code>NormalDeviation</code> procedural texture evaluating normal deviation from a given direction</li>
+              <li><code>MixTexture</code> procedural texture mixing two other textures with a third as a mix value</li>
+              <li><code>Perlin3D</code> solid procedural Perlin Noise</li>
+              <li><code>Fbm3D</code> solid procedural Fractional Brownian Noise on top of Perlin Noise</li>
+            </ul>
+          </p>
+          <p><icon>file</icon><samp>Core/Texture.h, Core/Texture.cpp, Texture/*</samp></p>
+
+        </div>
+      </div>
+
+
+      <div class="row">
+        <div class="c12">
+          <section class="top" id="advancedFeatures">
+            <h2>Advanced Features</h2>
+          </section>
+          <hr>
+        </div>
+      </div>
+
+
+      <div class="row">
+        <div class="c11">
+          <h6>Volumetric Path Tracing</h6>
+          <p>
+            For my advanced feature, I decided to implement a basic version of volumetric path tracing. I started out with homogeneous and isotropic media and a naive path tracer.
+          </p>
+          <p>
+            Phase functions are implemented as subclasses of the <code>PhaseFunction</code> baseclass. They implement the usual <code>sample</code>, <code>eval</code> and <code>pdf</code> functions and use the <code>PhaseFunctionQuery</code> object for passing parameters and results (incident/exitant direction). The isotropic phase function is implemented in the <code>Isotropic</code> class.
+          </p>
+          <p>
+            Participating media are implemented as subclasses of the <code>Medium</code> baseclass. They implement two functions:
+            <ul>
+              <li><code>Medium::sample</code> samples a propagation distance on a given ray segment, and returns <code>true</code> if a propagation distance was sampled somewhere on the given ray segment, <code>false</code> if there was no scatter event before reaching the end of the ray segment. Additionally, the sampled distance, transmittance to the scatter location and the PDF is stored in a <code>MediumQuery</code> object. On success, <code>pdfSuccess</code> denotes the probability of selecting the given propagation distance, on failure, <code>pdfFailure</code> denotes the probability of choosing a point somewhere from the end of the ray segment to infinity.</li>
+              <li><code>Medium::transmittance</code> computes the transmittance along a given ray segment.
+            </ul>
+            The homogeneous medium is implemented in the class <code>Homogeneous</code>. To sample a propagation distance, it selects one of the RGB values of the extinction coefficient randomly and samples the distance exponentially. Then it uses MIS to compute a combined PDF based on all 3 color channels.
+          </p>
+          <p>
+            The naive volumetric path tracer is implemented in the class <code>VolPathNaive</code>. The basic procedure is the following:
+            <ul>
+              <li>sample a propagation distance</li>
+              <li>if scattering occured, adjust throughput and sample a new direction using the phase function</li>
+              <li>if no scattering occured, adjust througput and sample a new direction using the BSDF at the surface</li>
+              <li>if a light source is hit, terminate ray and add contribution</li>
+              <li>use russian roulette to terminate recursion</li>
+            </ul>
+          </p>
+          <p><icon>file</icon><samp>Core/Phase.h, Phase/Isotropic.cpp, Core/Medium.h, Medium/Homogeneous.cpp, Integrator/VolPathNaive.cpp</samp></p>
+          <p>
+            As a first test scene, I set up a cornell box that is filled with a homogeneous isotropic medium. I used <code>sigmaA = (0.01, 0.05, 0.09)</code> and <code>sigmaS = (0.5, 0.4, 0.3)</code> for absorption and scattering coefficients. Then I compared the results from my renderer with results obtained from Mitsuba. As Mitsuba has two integrators based on volumetric path tracing (<code>volpath</code> and <code>volpath_simple</code>), I rendered the same scene with both integrators, and to my suprise found out, that the two integrators in Mitsuba did not match up. My results did match up with the <code>volpath</code> integrator in Mitsuba, and because the naive path tracer is quite simple in nature, I trust it to be correct and used my naive path tracer for comparsions in the tests to follow.
+          </p>
+          <div class="imagebox"><img src="cornell-homogeneous-comp.png"/>
+            <div class="details"><p>Left: skr / Right: Mitsuba volpath integrator (4096 spp)</p></div>
+          </div>
+          <div class="imagebox"><img src="cornell-homogeneous-mitsuba-diff.png"/>
+            <div class="details"><p>Difference between Mitsuba volpath and volpath_simple</p></div>
+          </div>
+          <p>
+            As a next step, I wanted to enclose my homogeneous media in arbitrary mesh boundaries. For this to work, I added a "forward" BSDF, which simply forwards incoming rays in a straight direction (implemented in the <code>Forward</code> class). As a test scene, I set up a cornell box with a sphere that contains a homogeneous medium and uses the forward BSDF on the boundary. I used <code>sigmaA = (0.5, 0.7, 0.9)</code> and <code>sigmaS = (1.0, 2.0, 3.0)</code> for absorption and scattering coefficients. This time, Mitsuba's integrators seemed to match up. The images below show the comparsion to Mitsuba. The difference image on the right is at +4 exposure values to show that there is only uniform noise due to sampling but no bias.
+          </p>
+          <div class="imagebox"><img src="cornell-fogball-comp.png"/>
+            <div class="details"><p>Left: skr / Right: Mitsuba volpath_simple integrator (4096 spp)</p></div>
+          </div>
+          <div class="imagebox"><img src="cornell-fogball-diff.png"/>
+            <div class="details"><p>Difference between skr and Mitsuba with +4 EV</p></div>
+          </div>
+
+          <h6>Multiple Importance Sampling</h6>
+          <p>
+            In order to reduce variance in the renderings with participating media, I have also written an improved version of the volumetric path tracer using importance sampling, combining the direct sampling of direct lighting with sampling of the phase function. This technique however, brings no real advantage as long as shadow rays are terminated at the first encounter of an intersection with geometry. This is why I had to extend the binary shadow rays with generalized shadow rays, which are allowed to pass through index-matched interfaces. To test this concept, I first implemented the generalized shadow rays in the basic path tracer that does not support participating media. This already has an advantage when rendering scenes that contain geometry which is only partially opaque. To enable partially opaque geometry, I first implemented the <code>Masked</code> BSDF, which allows an alpha map to specify the opacity. I then extended my path tracer with generalized shadow rays. The following shows a comparison rendering using a sphere that is only partially opaque. Note that when using binary shadow rays, we get a lot of variance, especially near the floor, where most shadow rays hit the geometry and prevent any contribution from direct lighting. Using generalized shadow rays however, we get the desired contribution from direct lighting, hence improve variance considerably. To show correctness, I rendered the same scene with binary and generalized shadow rays until convergence and took their difference.
+          </p>
+          <div class="imagebox"><img src="cornell-mask-comp.png"/>
+            <div class="details"><p>Left: Binary shadow rays / Right: Generalized shadow rays (256 spp)</p></div>
+          </div>
+          <div class="imagebox"><img src="cornell-mask-diff.png"/>
+            <div class="details"><p>Difference between binary / generalized shadow rays (converged)</p></div>
+          </div>
+          <p><icon>file</icon><samp>BSDF/Masked.cpp, Integrator/Path.cpp, Core/Scene.cpp</samp></p>
+          <p>
+            Next, I also implemented generalized shadow rays in the enhanced path tracer with support for participating media. This required shadow rays to not only account for opacity, but also account for transmittance along the ray. This technique, together with importance sampling, resulted in much reduced variance when rendering images with participating media. The following shows comparisons between the naive and the improved volumetric path tracer, using the test scenes for homogeneous media:
+          </p>
+          <div class="imagebox"><img src="cornell-homogeneous-mis-comp.png"/>
+            <div class="details"><p>Left: Naive / Right: MIS (256 spp)</p></div>
+          </div>
+          <div class="imagebox"><img src="cornell-homogeneous-mis-diff.png"/>
+            <div class="details"><p>Difference between naive / MIS +4 EV (semi-converged)</p></div>
+          </div>
+          <div class="imagebox"><img src="cornell-fogball-mis-comp.png"/>
+            <div class="details"><p>Left: Naive / Right: MIS (256 spp)</p></div>
+          </div>
+          <div class="imagebox"><img src="cornell-fogball-mis-diff.png"/>
+            <div class="details"><p>Difference between naive / MIS +4 EV (semi-converged)</p></div>
+          </div>
+          <p><icon>file</icon><samp>Integrator/VolPath.cpp</samp></p>
+
+          <h6>Heterogeneous Media</h6>
+          <p>
+            As a next step, I implemented heterogeneous media. In order to simplify sampling the propagation distance and evaluating the transmittance, I kept the heterogeneous medium monochromatic. The medium is configured with a spacially varying scalar extinction coefficient, further denoted as <i>density</i>. The scattering and absorption coefficients are then computed by a second spatially varying scalar value denoted as <i>albedo</i>. Using the following equations we can then derive the extinction, scattering and absorption coefficients:
+            <p><center><img src="eq-density.png"/></center></p>
+            The values for the density and albedo functions are provided by subclasses of the <code>Volume</code> baseclass. The simplest being the <code>Constant</code> class, just returning a constant value. For spacially varying functions, <code>VoxelGrid</code> and decendent classes are used. The <code>VoxelGrid</code> just stores a 3-dimensional grid of scalar values. The descendents implement various functions to procedurally fill the grid with various functions.
+          </p>
+          <p>
+            To evaluate the transmittance in a heterogeneous medium, the query ray is intersected against the bounding box of the voxel grid, and then I use numerical integration using the trapezoidal rule to compute the density integral:
+            <p><center><img src="eq-density-integral.png"/></center></p>
+            The stepsize <img src="eq-h.png"/> is derived from the voxel grid and determines the number of steps <img src="eq-N.png"/> to compute the integral. Using the density integral, transmittance is now easily computed using:
+            <p><center><img src="eq-transmittance.png"/></center></p>
+            Evaluating the transmittance is implemented in <code>Heterogeneous::transmittance</code>, the numerical density integration is implemented in <code>Heterogeneous::integrateDensity</code>.
+          </p>
+          <p>
+            To sample the propagation distance inside a heterogeneous, we can use the following equation:
+            <p><center><img src="eq-propagation-distance.png"/></center></p>
+            The implementation computes the left hand side using a random number <img src="eq-xi.png"/>, and then uses numerical integration using the trapezoidal rule to compute the distance until the integrated density matches the left hand side. Sampling the propagation distance is implemented in <code>Heterogeneous::sample</code> and uses <code>Heterogeneous::findDensity</code> to find the distance travelled in the medium.
+          </p>
+          <p><icon>file</icon><samp>Medium/Heterogeneous.cpp, Core/Volume.h, Volume/Constant.cpp, Volume/VoxelGrid.cpp</samp></p>
+          <p>
+            In order to validate the correctness of the implementation of heterogeneous media, I set up a test scene that contains a ball of fog. First, I rendered the ball using a sphere with a forward BSDF boundary that encloses a homogeneous medium. Second, I rendered the scene where the sphere is replaced with a heterogeneous medium with a density function defined by a 128x128x128 grid containing a solid sphere. The results are expected to be identical. The difference image on the right is at +4 exposure values, to show that there is only minor differences due to the finite resolution of the density function. Note that rendering with the heterogeneous medium is roughly 4x slower due to the overhead of raymarching.
+          </p>
+          <div class="imagebox"><img src="cornell-fogball2-comp.png"/>
+            <div class="details"><p>Left: Homogeneous medium / Right: Heterogeneous medium (512 spp)</p></div>
+          </div>
+          <div class="imagebox"><img src="cornell-fogball2-diff.png"/>
+            <div class="details"><p>Difference between homogeneous / heterogeneous +4 EV (512 spp)</p></div>
+          </div>
+          <p>
+            In order to render a more interesting image with a heterogeneous medium, I implemented a simple algorithm to compute a cloud like density voxel grid. The idea is derived from <a href="#ref6">[6]</a> and uses a simple distance function based around a sphere and a FBM to offset the boundary:
+            <p><center><img src="eq-pyroclustic-density.png"/></center></p>
+            Doing some parameter tweaking for the FBM and medium properties, we get a nice little cloud:
+          </p>
+          <div class="imagebox"><img src="cornell-cloud1.png"/>
+            <div class="details"><p>Pyroclustic density function (512 spp)</p></div>
+          </div>
+          <h6>Additional Renderings</h6>
+          <p>
+            Some additional renderings done with volumetric path tracing.
+          </p>
+          <div class="imagebox"><img src="vpt-coke-bunny.png"/>
+            <div class="details"><p>Coke Bunny</p></div>
+          </div>
+          <div class="imagebox"><img src="vpt-beer-lucy.png"/>
+            <div class="details"><p>Beer Lucy</p></div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <div class="row">
+        <div class="c12">
+          <section class="top" id="finalImage">
+            <h2>Final Image</h2>
+          </section>
+          <hr>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c12">
+          <p>
+            For the final image, I only used a subset of the features implemented in the renderer. The idea to fill the scene with a heterogeneous medium turned out to be a bit over the top, as rendertimes with the current implementation would just go through the roof. Nevertheless, I was able to reach my initial goal of rendering an old typewriter and telephone. Quite a bit of time was needed to cleanup the models (which I got from the internet), create materials and textures, setup the scene and do the composition. To get a photorealistic look, lighting from an environment map as well as the camera model, that is configured with physically sound parameters, helped a lot. I also experimented with some other ideas, such as adding a thin layer of dust on the objects, using mixed materials based on the geometry normal, perturbed with noise functions, but it was difficult to get a good look. The first image shows the rendered image directly from my renderer. It has a resolution of 2880×1620 pixels and was rendered with 8k spp in roughly 6h.
+          </p>
+          <img src="compo6-direct.png"/>
+          <p>
+            Due to having quite high dynamic range in the rendered image, I used Photomatix Pro to tonemap the image and bring back some of the details. I also removed a little bit of saturation and tuned the color temperature to my taste.
+          </p>
+          <img src="compo6-tonemapped.jpg"/>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="c12">
+          <h6>References</h6>
+          [1] <a id="ref1" href="http://www.cs.virginia.edu/~gfx/courses/2007/ImageSynthesis/assignments/envsample.pdf">Monte Carlo Rendering with Natural Illumination</a><br>
+          [2] <a id="ref2" href="http://www1.cs.columbia.edu/CAVE/publications/pdfs/Oren_SIGGRAPH94.pdf">Generalization of Lambert's Reflectance Model</a><br>
+          [3] <a id="ref3" href="http://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf">Microfacet Models for Refraction through Rough Surfaces</a><br>
+          [4] <a id="ref4" href="http://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/">Memo on Fresnel equations</a><br>
+          [5] <a id="ref5" href="http://www.uni-ulm.de/fileadmin/website_uni_ulm/iui.inst.100/institut/Papers/ugiwpm.pdf">Unbiased Global Illumination with Participating Media</a><br>
+          [6] <a id="ref6" href="http://magnuswrenninge.com/content/pubs/ProductionVolumeRenderingFundamentals2011.pdf">Production Volume Rendering - Fundamentals</a><br>
+        </div>
+      </div>
+    </main>
+
+    <br/><br/>
+
+    <footer>
+      <div class="row">
+        <div class="c12">
+          <p><i>Made with <a href="http://firezenk.github.io/zimit/index.html">Zimit Framework</a></i></p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Rainbow -->
+    <script type="text/javascript" src="js/vendor/rainbow-custom.min.js"></script>
+  </body>
+</html>

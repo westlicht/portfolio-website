@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="shortcut icon" type="image/vnd.microsoft.icon" href="../favicon.ico"/>
+
+    <title>Final Project Report - Simon Kallweit - Computer Graphics ETHZ 2015</title>
+
+    <link href="resources/bootstrap.min.css" rel="stylesheet"/>
+    <link href="resources/offcanvas.css" rel="stylesheet"/>
+    <link href="resources/twentytwenty.css" rel="stylesheet" type="text/css"/>
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+
+<nav class="navbar navbar-default navbar-fixed-top _navbar-inverse">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li><a href="#intro">Intro</a></li>
+                <li><a href="#disneybrdf">Disney BRDF</a></li>
+                <li><a href="#realisticcamera">Realistic Camera</a></li>
+                <li><a href="#heterogeneousmedia">Heterogeneous Media</a></li>
+                <li><a href="#volumeemission">Volume Emission</a></li>
+                <li><a href="#adaptivesampling">Adaptive Sampling</a></li>
+                <li><a href="#denoising">Denoising</a></li>
+                <li><a href="#scenemodelling">Scene Modelling</a></li>
+                <li><a href="#finalimage">Final Image</a></li>
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
+<div class="container headerBar">
+    <h1 id="intro">Final Project Report - Simon Kallweit</h1>
+    <h3>Computer Graphics ETHZ 2015</h3>
+</div>
+
+<div class="container contentWrapper">
+<div class="pageContent">
+
+    <!-- ================================================================= -->
+
+    <h3>Motivational Image</h3>
+
+    <p>The motivational image depicts four natural elements: earth, fire, water and air. I did not intend to reproduce the image closely, but I liked the main idea and composition. The image shows a few interesting phenomena for rendering, e.g. glossy reflections, heterogeneous media and light emission from volumes.<p>
+
+    <img src="images/elements.jpg" alt="Motivational Image" class="img-responsive">
+    <p class="text-center">Motivational Image</p>
+
+    <h3>Third Party Libraries</h3>
+
+    <p>In addition to the libraries already used by Nori from the beginning, the following libraries have been added:<p>
+
+    <ul>
+    <li><a href="https://github.com/jarro2783/cxxopts/">cxxopts</a> - for parsing command line arguments</li>
+    <li><a href="http://lodev.org/lodepng/">lodepng</a> - for saving PNG images</li>
+    <li><a href="http://www.openvdb.org/">openvdb</a> - for OpenVDB volume grid support</li>
+    <li><a href="http://gruenschloss.org/">sobol</a> - for sobol sequences used in the sobol sampler</li>
+    </ul>
+
+    <h3>Basic Features</h3>
+
+    <p>The following features I have already implemented as part of the <a href="https://graphics.ethz.ch/teaching/imsynth14/competition//2nd%20Place..%20Simon%20Kallweit/report.html">renderer I created for the 2014 Image Synthesis class</a>. They are not graded so there is no in-depth description/verification of their implementation.</p>
+
+    <ul>
+    <li>Thin Lens Camera</li>
+    <li>Bump Mapping</li>
+    <li>Blend BSDF - blends between two BSDFs based on a mix texture</li>
+    <li>Conductor BSDF - using complex IOR</li>
+    <li>Rough Conductor BSDF - using microfacet model and complex IOR based on <a href="#ref6">[6]</a></li>
+    <li>Rough Diffuse BSDF - using qualitative Oren-Nayer model based on <a href="#ref7">[7]</a></li>
+    <li>Transparent/Forwarding BSDF</li>
+    <li>Sobol Sampler using Sobol implementation from <a href="#ref8">[8]</a></li>
+    <li>Bitmap Texture</li>
+    <li>Scale Texture</li>
+    <li>Environment Map Emitter with Importance Sampling based on <a href="#ref5">[5]</a></li>
+    <li>Homogeneous Media</li>
+    </ul>
+
+    <h2 id="disneybrdf">Disney BRDF</h2>
+
+    <ul>
+        <li><code>include/nori/bsdf.h</code></li>
+        <li><code>src/bsdfs/disney.cpp</code></li>
+    </ul>
+
+    <p>Surface appearance is very important for generating realistic images. Having implemented a whole list of different BSDFs in the past, I wanted to implement something more flexible this time, even if it is not fully physically correct. I decided to implement Disney's Principled BSDF, which is thoroughly described in <a href="#ref1">[1]</a>. Additional information is available in <a href="#ref2">[2]</a> and <a href="#ref3">[3]</a>. This BSDF is physically based but not completely physically correct (e.g. not always energy conserving). It was designed with the following principles in mind:</p>
+
+    <ul>
+        <li>Intuitive rather than physical parameters should be used.</li>
+        <li>There should be as few parameters as possible.</li>
+        <li>Parameters should be zero to one over their plausible range.</li>
+        <li>Parameters should be allowed to be pushed beyond their plausible range where it makes sense.</li>
+        <li>All combinations of parameters should be as robust and plausible as possible.</li>
+    </ul>
+
+    <p>The BRDF is parametrized by a single color value and a set of scalar values in the range \([0..1]\). The effect of these parameters is shown in the following image:</p>
+
+    <a href="images/disney-brdf.png"><img class="img-responsive" src="images/disney-brdf.png" alt="Disney BRDF"/></a>
+    <p class="text-center">Visualization of the Disney BRDF parameters (rendered in Nori)</p>
+
+    <h5>Verification</h5>
+
+    <p>Verifying the BSDF is not an easy task, as there is no reference implementation to compare against. In the following sections I show qualitative comparisons against BSDFs in Mitsuba as well as point out some of the expected behavior of the BSDF.</p>
+
+    <h5>Variables and Terms</h5>
+
+    <p>
+    \( \theta_i \) Incident angle<br>
+    \( \theta_o \) Exitant angle<br>
+    \( \theta_h \) Half angle<br>
+    \( lerp(t,a,b) = (1-t)a + tb \)<br>
+    </p>
+
+    <h5>Fresnel Terms</h5>
+
+    <p>Instead of using the full fresnel equations, the Disney BRDF uses Schlick's approximation defined as follows:</p>
+
+    \[ F(\theta) = (1 - \cos{\theta})^5 \]
+
+    <h5>Diffuse Model</h5>
+
+    <p>Instead of relying on the default Lambert or Oren-Nayer diffuse reflection models, the Disney BRDF uses an empirical model, which reduces the diffuse reflectance by 0.5 at grazing angles for smooth surfaces and increases the reflectance by up to 2.5 for rough surfaces. The diffuse reflection model is defined as follows:<p> 
+
+    \[ f_d(\theta_i,\theta_o) = \frac{baseColor}{\pi} (1 + (F_{D90} - 1) F(\theta_i)) (1 + (F_{D90} - 1) F(\theta_o)) \]
+    \[ F_{D90} = 0.5 + \cos{\theta_h}^2 roughness \]
+
+    <p>The following clearly shows the decreased/increased reflectance at grazing angles compared to the Lambert model:</p>
+
+    <div class="col-md-4">
+        <div class="twentytwenty-container">
+            <img src="images/mattest-disney-diffuse-roughness-0.0.png" alt="Disney" class="img-responsive">
+            <img src="images/mattest-disney-diffuse-mitsuba.png" alt="Lambert" class="img-responsive">
+        </div>
+        <p class="text-center">\[roughness = 0.0\]</p>
+    </div>
+    <div class="col-md-4">
+        <div class="twentytwenty-container">
+            <img src="images/mattest-disney-diffuse-roughness-0.5.png" alt="Disney" class="img-responsive">
+            <img src="images/mattest-disney-diffuse-mitsuba.png" alt="Lambert" class="img-responsive">
+        </div>
+        <p class="text-center">\[roughness = 0.5\]</p>
+    </div>
+    <div class="col-md-4">
+        <div class="twentytwenty-container">
+            <img src="images/mattest-disney-diffuse-roughness-1.0.png" alt="Disney" class="img-responsive">
+            <img src="images/mattest-disney-diffuse-mitsuba.png" alt="Lambert" class="img-responsive">
+        </div>
+        <p class="text-center">\[roughness = 1.0\]</p>
+    </div>
+
+    <h5>Subsurface Model</h5>
+
+    <p>To model subsurface scattering the Disney BRDF blends between the diffuse model and a Hanrahan-Krueger inspired model. This subsurface scattering model is a very crude approximation and only works for materials with very short mean free paths.</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/mattest-disney-diffuse-subsurface-0.0.png" alt="\(subsurface = 0.0\)" class="img-responsive">
+        <img src="images/mattest-disney-diffuse-subsurface-1.0.png" alt="\(subsurface = 1.0\)" class="img-responsive">
+    </div>
+    <p class="text-center">Subsurface Model</p>
+
+    <h5>Specular / Clearcoat Model</h5>
+
+    <p>The specular lobes use a standard microfacet model defined by:</p>
+
+    \[ f_s(\theta_i, \theta_o) = \frac{D(\theta_h)F(\theta_i)G(\theta_i,\theta_o)}{4\cos\theta_i\cos\theta_o} \]
+
+    <p>where \(D\) is the normal distribution, \(F\) is the fresnel term and \(G\) the shadowing term For the normal distribution, the Generalized-Trowbridge-Reitz (GTR) is used:</p>
+
+    \[ D_{GTR}(\theta_h) = \frac{c}{(\alpha^2 \cos^2\theta_h + \sin^2\theta_h)^\gamma} \]
+
+    <p>where \(c\) is a normalization constant and \(\alpha\) is the roughness value. Two specular lobes are used, the main specular lobe using \(\gamma = 2\) and the clearcoat lobe using \(\gamma = 1\). Instead of specifying the IOR explicitly, the BRDF uses the \(specular\) parameter, which maps to a range of \([0..0.8]\), that corresponds to IOR values of \([1..1.8]\), where the middle value corresponds to an IOR of \(1.5\) (polyurethane). For the clearcoat lobe, a fix IOR of \(1.5\) is used, and the strength is based on the \(clearcoat\) parameter that is scaled to a range of \([0..0.25]\). The roughness value of the specular lobe is defined as \(\alpha = roughness^2\), whereas the roughness value of the clearcoat lobe is defined as \(\alpha = lerp(clearcoatGloss, 0.2, 0.001)\).</p>
+
+    <p>For the shadowing term \(G\) the standard smith shadowing term is used. However, Disney uses some strange tweaks (adjusting roughness value) to the shadowing term, which is motivated from artists that complained about specular being too hot at grazing angles. When comparing the specular component against Mitsuba renderings, this darkening at grazing angles is clearly visible and I personally don't like it too much.</p>
+
+    <div class="col-md-4">
+        <div class="twentytwenty-container">
+            <img src="images/mattest-disney-specular-roughness-0.0.png" alt="Disney" class="img-responsive">
+            <img src="images/mattest-disney-specular-mitsuba-roughness-0.0.png" alt="Mitsuba" class="img-responsive">
+        </div>
+        <p class="text-center">\[roughness = 0.0\]</p>
+    </div>
+    <div class="col-md-4">
+        <div class="twentytwenty-container">
+            <img src="images/mattest-disney-specular-roughness-0.2.png" alt="Disney" class="img-responsive">
+            <img src="images/mattest-disney-specular-mitsuba-roughness-0.2.png" alt="Mitsuba" class="img-responsive">
+        </div>
+        <p class="text-center">\[roughness = 0.2\]</p>
+    </div>
+    <div class="col-md-4">
+        <div class="twentytwenty-container">
+            <img src="images/mattest-disney-specular-roughness-0.4.png" alt="Disney" class="img-responsive">
+            <img src="images/mattest-disney-specular-mitsuba-roughness-0.4.png" alt="Mitsuba" class="img-responsive">
+        </div>
+        <p class="text-center">\[roughness = 0.4\]</p>
+    </div>
+
+    <div class="col-md-4">
+        <div class="twentytwenty-container">
+            <img src="images/mattest-disney-metallic-roughness-0.0.png" alt="Disney" class="img-responsive">
+            <img src="images/mattest-disney-metallic-mitsuba-roughness-0.0.png" alt="Mitsuba" class="img-responsive">
+        </div>
+        <p class="text-center">\[roughness = 0.0\]</p>
+    </div>
+    <div class="col-md-4">
+        <div class="twentytwenty-container">
+            <img src="images/mattest-disney-metallic-roughness-0.2.png" alt="Disney" class="img-responsive">
+            <img src="images/mattest-disney-metallic-mitsuba-roughness-0.2.png" alt="Mitsuba" class="img-responsive">
+        </div>
+        <p class="text-center">\[roughness = 0.2\]</p>
+    </div>
+    <div class="col-md-4">
+        <div class="twentytwenty-container">
+            <img src="images/mattest-disney-metallic-roughness-0.4.png" alt="Disney" class="img-responsive">
+            <img src="images/mattest-disney-metallic-mitsuba-roughness-0.4.png" alt="Mitsuba" class="img-responsive">
+        </div>
+        <p class="text-center">\[roughness = 0.4\]</p>
+    </div>
+
+    <h5>Sheen Model</h5>
+
+    <p>Too add in <em>sheen</em>, typically observed in cloth materials, the following simple term is used:<p>
+
+    \[ f_{sheen} = F(\theta_h) \cdot sheen \cdot lerp(sheenTint, 1, baseColor) \]
+
+    <h5>Importance Sampling</h5>
+
+    <p>For efficient sampling of the Disney BRDF, I have implemented an importance sampling scheme based on the following three samplable distributions:</p>
+
+    <ul>
+        <li>Cosine weighted hemisphere</li>
+        <li>GTR1 normal distribution</li>
+        <li>GTR2 normal distribution</li>
+    </ul>
+
+    <p>First, I have verified that sampling the GTR1 and GTR2 distributions works correctly by testing them in the provided framework.<p>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">GTR1 Sampling Verification</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="images/gtr1-0.05.png"><img class="img-responsive" src="images/gtr1-0.05.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.05\]</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/gtr1-0.2.png"><img class="img-responsive" src="images/gtr1-0.2.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.2\]</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/gtr1-0.8.png"><img class="img-responsive" src="images/gtr1-0.8.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.8\]</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="images/gtr1-0.05-test.png"><img class="img-responsive" src="images/gtr1-0.05-test.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.05\]</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/gtr1-0.2-test.png"><img class="img-responsive" src="images/gtr1-0.2-test.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.2\]</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/gtr1-0.8-test.png"><img class="img-responsive" src="images/gtr1-0.8-test.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.8\]</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>    
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">GTR2 Sampling Verification</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="images/gtr2-0.05.png"><img class="img-responsive" src="images/gtr2-0.05.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.05\]</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/gtr2-0.2.png"><img class="img-responsive" src="images/gtr2-0.2.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.2\]</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/gtr2-0.8.png"><img class="img-responsive" src="images/gtr2-0.8.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.8\]</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="images/gtr2-0.05-test.png"><img class="img-responsive" src="images/gtr2-0.05-test.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.05\]</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/gtr2-0.2-test.png"><img class="img-responsive" src="images/gtr2-0.2-test.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.2\]</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/gtr2-0.8-test.png"><img class="img-responsive" src="images/gtr2-0.8-test.png" alt=""/></a>
+                    <p class="text-center">\[\alpha = 0.8\]</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p>For sampling the BRDF, I first use russian roulette to decide between sampling the diffuse lobe or the specular lobes with the following ratio:</p>
+
+    \[ ratio_{diffuse} = \frac{1 - metallic}{2} \]
+
+    <p>e.g. for non-metallic materials, half of the samples are sampled with cosine weighted hemisphere sampling, the other half with specular sampling described below. For metallic materials, all samples are sampled using specular sampling.<p>
+
+    <p>The specular samples are divided into sampling the GTR2 (specular lobe) and GTR1 (clearcoat lobe) distribution with the following ratio:</p>
+
+    \[ ratio_{GTR2} = \frac{1}{1 + clearcoat} \]
+
+    <p>e.g. for materials with no clearcoat, samples are only sampled using the GTR2 distribution, for materials with 100% clearcoat, half the samples are directed to either of the distributions.</p>
+
+    <p>Finally, the following shows a few materials that I rendered using the Disney BRDF:</p>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Materials made using the Disney BRDF</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="images/mattest-plastic.png"><img class="img-responsive" src="images/mattest-plastic.png" alt=""/></a>
+                    <p class="text-center">Plastic</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/mattest-wood.png"><img class="img-responsive" src="images/mattest-wood.png" alt=""/></a>
+                    <p class="text-center">Wood</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/mattest-ceramic-tiles.png"><img class="img-responsive" src="images/mattest-ceramic-tiles.png" alt=""/></a>
+                    <p class="text-center">Ceramic Tiles</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="images/mattest-concrete.png"><img class="img-responsive" src="images/mattest-concrete.png" alt=""/></a>
+                    <p class="text-center">Concrete</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/mattest-metal-panels.png"><img class="img-responsive" src="images/mattest-metal-panels.png" alt=""/></a>
+                    <p class="text-center">Metal Panels</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="images/mattest-metal-scratched.png"><img class="img-responsive" src="images/mattest-metal-scratched.png" alt=""/></a>
+                    <p class="text-center">Scratched Metal</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>    
+
+    <h2 id="realisticcamera">Realistic Camera</h2>
+
+    <ul>
+        <li><code>src/cameras/realistic.h</code></li>
+        <li><code>src/cameras/realistic.cpp</code></li>
+        <li><code>src/lenstest.cpp</code></li>
+    </ul>
+
+    <p>In order to create photo-realistic images, a good approximation of the camera lens system is essential. The simplest lens approximation is the pinhole camera, which essentially simulates a lens with infinitely small aperture. Most photographs are taken with larger apertures however, because it lets more light hit the film/sensor, generating less noisy photographs. Also, larger apertures lead to a more shallow depth of field, which allows to separate a subject from the background and create a better sense of depth in the photograph. To simulate the effect of a larger aperture, one can use the thin lens approximation <a href="#ref12">[12]</a>. This allows for better realism but it is still a rather crude approximation when compared to a real camera lens system. Many of the artifacts that happen in a real lens such as cat's eye, vignetting, non-planar focus region and others have to be faked when using the thin lens model. This is why I have decided to implement a more realistic camera model based on <a href="#ref4">[4]</a>. The basic idea is to shoot rays through a bunch of spherical lens elements, essentially simulating what happens in a real camera lens system. For debugging and testing purposes I have also implemented a lens testing application, which was used to generate all the following screen shots.<p>
+
+    <p>The following images show a 50mm lens with different aperture values. With smaller apertures, less light hits the sensor and the passing light paths get more and more parallel, resulting in a larger focus region.<p>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Aperture</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <a href="images/lens-f2.png"><img class="img-responsive" src="images/lens-f2.png" alt=""/></a>
+                    <p class="text-center">f/2</p>
+                </div>
+                <div class="col-md-3">
+                    <a href="images/lens-f4.png"><img class="img-responsive" src="images/lens-f4.png" alt=""/></a>
+                    <p class="text-center">f/4</p>
+                </div>
+                <div class="col-md-3">
+                    <a href="images/lens-f8.png"><img class="img-responsive" src="images/lens-f8.png" alt=""/></a>
+                    <p class="text-center">f/8</p>
+                </div>
+                <div class="col-md-3">
+                    <a href="images/lens-f22.png"><img class="img-responsive" src="images/lens-f22.png" alt=""/></a>
+                    <p class="text-center">f/22</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p>The following images show the lens elements used in different photographic lens systems.</p>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Lenses</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <a href="images/lens-dgauss-50mm.png"><img class="img-responsive" src="images/lens-dgauss-50mm.png" alt=""/></a>
+                    <p class="text-center">Double Gauss 50mm</p>
+                </div>
+                <div class="col-md-3">
+                    <a href="images/lens-fisheye-10mm.png"><img class="img-responsive" src="images/lens-fisheye-10mm.png" alt=""/></a>
+                    <p class="text-center">Fisheye 10mm</p>
+                </div>
+                <div class="col-md-3">
+                    <a href="images/lens-tele-250mm.png"><img class="img-responsive" src="images/lens-tele-250mm.png" alt=""/></a>
+                    <p class="text-center">Telephoto 250mm</p>
+                </div>
+                <div class="col-md-3">
+                    <a href="images/lens-wide-22mm.png"><img class="img-responsive" src="images/lens-wide-22mm.png" alt=""/></a>
+                    <p class="text-center">Wide 22mm</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p>In the next images, a 50mm lens is focused at different distances, which is accomplished by moving the lens relative to the film plane.</p>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Focusing</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <a href="images/lens-focus-infinity.png"><img class="img-responsive" src="images/lens-focus-infinity.png" alt=""/></a>
+                    <p class="text-center">Focused to Infinity</p>
+                </div>
+                <div class="col-md-6">
+                    <a href="images/lens-focus-0.1m.png"><img class="img-responsive" src="images/lens-focus-0.1m.png" alt=""/></a>
+                    <p class="text-center">Focused to 0.1m</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p>Finally, the following images show comparisons between images rendered with the thin lens and the realistic lens model. It clearly shows some of the benefits of simulating a realistic lens model such as vignetting, cat's eye bokeh, barrel distortion, non-planar focus plane and others. Some of these effects might be considered artifacts and are usually tried to be minimized in modern lens designs, however, in my opinion they do contribute a lot towards the realism of the generated images.</p>
+
+    <br>
+
+    <div class="twentytwenty-container">
+        <img src="images/lenstest-50mm-realistic.png" alt="Realistic" class="img-responsive">
+        <img src="images/lenstest-50mm-thinlens.png" alt="Thinlens" class="img-responsive">
+    </div>
+    <p class="text-center">Double Gauss 50mm</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/lenstest-250mm-realistic.png" alt="Realistic" class="img-responsive">
+        <img src="images/lenstest-250mm-thinlens.png" alt="Thinlens" class="img-responsive">
+    </div>
+    <p class="text-center">Telephoto 250mm</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/lenstest-10mm-realistic.png" alt="Realistic" class="img-responsive">
+        <img src="images/lenstest-10mm-thinlens.png" alt="Thinlens" class="img-responsive">
+    </div>
+    <p class="text-center">Fisheye 10mm</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/lenstest-bokeh-circular.png" alt="Circular" class="img-responsive">
+        <img src="images/lenstest-bokeh-octagon.png" alt="Octagon" class="img-responsive">
+    </div>
+    <p class="text-center">Bokeh</p>
+
+    <h2 id="heterogeneousmedia">Heterogeneous Media</h2>
+
+    <ul>
+        <li><code>include/nori/medium.h</code></li>
+        <li><code>include/nori/phasefunction.h</code></li>
+        <li><code>include/nori/piecewiselinear.h</code></li>
+        <li><code>include/nori/volume.h</code></li>
+        <li><code>src/integrators/volpath.cpp</code></li>
+        <li><code>src/mediums/heterogeneous.cpp</code></li>
+        <li><code>src/phasefunctions/hg.cpp</code></li>
+        <li><code>src/phasefunctions/isotropic.cpp</code></li>
+        <li><code>src/volumes/const.cpp</code></li>
+        <li><code>src/volumes/grid.cpp</code></li>
+        <li><code>src/volumes/grid.h</code></li>
+        <li><code>src/volumes/vdb.cpp</code></li>
+        <li><code>src/volumes/vdbutils.h</code></li>
+    </ul>
+
+    <p>In order to render the fire and smoke effect for my final image, I needed an implementation for rendering heterogeneous media. In a first step, I implemented rendering of simple homogeneous media, so I had a reference to compare my implementation of heterogeneous media against. I also implemented two versions of volumetric path tracers. The first one, <code>volpath_naive</code>, is based on the <code>path_mats</code> integrator, but extends it with sampling distances in media and sampling the phase function. The resulting integrator is extremely inefficient, but due to its simplicity, a good reference to compare against. The second more complex integrator, <code>volpath_mis</code>, is based on the <code>path_mis</code> integrator and extents it with sampling distances in media and sampling the phase function. It uses multiple importance sampling and combines sampling direct lighting as well as sampling the phase function, similarly to sampling direct lighting and the BSDF. This leads to a fairly efficient unidirectional volumetric path tracer.<p>
+
+    <p>Heterogeneous media are typically represented by voxel grids. In order to do some comparisons with Mitsuba, I first implemented a voxel grid that can read Mitsuba's voxel data format. In addition, I also implemented a voxel grid based on OpenVDB, to allow for more elaborate voxel data authoring using Houdini. To sample distances in the heterogeneous medium, I took a slightly different approach than the usual inversion of the transmittance. Instead, based on ideas from <a href="#ref11">[11]</a>, I raymarch through the volume, create a transmittance function, and then create a PDF based on the transmittance multiplied with the scattering coefficient. This PDF can then be used to sample scattering distances inside the medium. The transmittance function is cached in order to be reused when accounting for volume emission (see next section).</p>
+
+    <p>The following two comparisons show the correct rendering of heterogeneous media. The reference images are rendered using a sphere with a forwarding BSDF that contains a homogeneous medium. The same sphere is then created using a voxel grid (hence the visible voxelization artifacts) and rendered as heterogeneous media. Other than some minor bias (due to the raymarching), both images should be equal, which is clearly the case. As an additional validation, the last comparison shows a heterogeneous medium rendered in both Nori and Mitsuba.</p>
+
+    <br>
+
+    <div class="twentytwenty-container">
+        <img src="images/voltest-homogeneous1.png" alt="Homogeneous" class="img-responsive">
+        <img src="images/voltest-heterogeneous1.png" alt="Heterogeneous" class="img-responsive">
+    </div>
+    <p class="text-center">Comparison between homogeneous and heterogeneous media without scattering</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/voltest-homogeneous2.png" alt="Homogeneous" class="img-responsive">
+        <img src="images/voltest-heterogeneous2.png" alt="Heterogeneous" class="img-responsive">
+    </div>
+    <p class="text-center">Comparison between homogeneous and heterogeneous media with scattering</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/hetvol.png" alt="Nori" class="img-responsive">
+        <img src="images/hetvol-mitsuba.png" alt="Mitsuba" class="img-responsive">
+    </div>
+    <p class="text-center">Comparison between Nori and Mitsuba</p>
+
+    <h2 id="volumeemission">Volume Emission</h2>
+
+    <ul>
+        <li><code>include/nori/cie.h</code></li>
+        <li><code>include/nori/spectrum.h</code></li>
+        <li><code>src/emitters/medium.cpp</code></li>
+        <li><code>src/mediums/heterogeneous.cpp</code></li>
+        <li><code>src/volumes/fire.cpp</code></li>
+        <li><code>src/cie.cpp</code></li>
+    </ul>
+
+    <p>In addition to absorption and scattering in heterogeneous media, I also needed to implement emission from heterogeneous media to allow for the fire effect of the final image. For more efficient sampling of emission from volumes, I added support for volumetric emitters, such that direct lighting can be sampled with respect to solid angle, similarly to surface based emitters. Unfortunately this is a little more involved than for surface based emitters, because volume emitters are not opaque. Computing the probability for choosing a direction for direct lighting thus needs to account multiple emitters, not just the nearest to the shading location. In order to sample a direction towards emissive volumes, I use the following simple approach, extended from ideas presented in <a href="#ref10">[10]</a>: First, a bounding box around the emissive part is computed. Next, a position is sampled within the bounding box using uniform sampling. This position determines the direction from the shading location. To compute the PDF, we simply compute the integral of the probabilities of choosing all points inside the bounding box that lie on the ray from the shading location to the sampled position inside the bounding box. I planned to extend this idea from a single bounding box per emitter into a emission grid per emitter, each voxel would then be weighted according to the total emission within that voxel, which should decrease variance considerably. Due to time constraints I was not able to implement this idea however. The sampling of a box with respect to solid angle is verified in the following test:</p>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Box Sampling Verification</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <a href="images/box-sampling.png"><img class="img-responsive" src="images/box-sampling.png" alt=""/></a>
+                </div>
+                <div class="col-md-6">
+                    <a href="images/box-sampling-test.png"><img class="img-responsive" src="images/box-sampling-test.png" alt=""/></a>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+    <p>To test volume emission, I set up a scene containing an emissive volumetric sphere in the middle and four spheres around, each with a different BSDFs (rough conductor, dielectric, diffuse and forwarding). Each image was rendered once with the <code>volpath_naive</code> integrator using 512spp, and once with the <code>volpath_mis</code> integrator using 256spp. Render times are roughly equal, but usually the <code>volpath_mis</code> took a little longer. The first comparison shows emission only, with no absorption or scattering. As a comparison, the same scene was also rendered with a surface based emitter, which however does not lead to the exact same results, as the diffuse surface based emitter emits the same radiance in all directions, whereas the volume based emitter emits less radiance with grazing angles (this is clearly visible in the reflections and caustics). The second comparison adds an absorption only heterogeneous medium. The last comparison also adds scattering. The comparisons clearly show the importance of MIS for rendering (emissive) volumes.</p>
+
+    <br>
+
+    <div class="twentytwenty-container">
+        <img src="images/voltest-emission-sphere1-naive.png" alt="Naive (512spp)" class="img-responsive">
+        <img src="images/voltest-emission-sphere1-mis.png" alt="MIS (256spp)" class="img-responsive">
+        <img src="images/voltest-emission-sphere1-ref.png" alt="MIS (256spp)" class="img-responsive">
+    </div>
+    <p class="text-center">Emissive sphere volume</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/voltest-emission-sphere2-naive.png" alt="Naive (512spp)" class="img-responsive">
+        <img src="images/voltest-emission-sphere2-mis.png" alt="MIS (256spp)" class="img-responsive">
+    </div>
+    <p class="text-center">Emissive sphere volume surrounded in heterogeneous medium without scattering</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/voltest-emission-sphere3-naive.png" alt="Naive (512spp)" class="img-responsive">
+        <img src="images/voltest-emission-sphere3-mis.png" alt="MIS (256spp)" class="img-responsive">
+    </div>
+    <p class="text-center">Emissive sphere volume surrounded in heterogeneous medium with scattering</p>
+
+    <p>With basic volume emission in place, I needed a way to render flames/fire. Instead of manually coloring the emission volume, I used ideas presented in <a href="#ref9">[9]</a> (chapter 4.5 in the <em>Volume Rendering at Sony Pictures Imageworks</em> part) to derive believable emission from a temperature grid. The results can be seen below:</p>
+
+    <br>
+
+    <div class="twentytwenty-container">
+        <img src="images/voltest-fire-naive.png" alt="Naive (512spp)" class="img-responsive">
+        <img src="images/voltest-fire-mis.png" alt="MIS (256spp)" class="img-responsive">
+    </div>
+    <p class="text-center">Fire using heterogeneous medium and blackbody emission (using <code>fire.vdb</code> from <a href="http://www.openvdb.org/download/">openvdb.org</a>)</p>
+
+    <h2 id="adaptivesampling">Adaptive Sampling</h2>
+
+    <ul>
+        <li><code>src/render.cpp</code></li>
+    </ul>
+
+    <p>Rendering an image with a Monte Carlo Path Tracer that uses the same number of samples for each pixel is not efficient. This is due to the fact that in complex scenes some areas of the image might converge considerably faster than others. For example, areas with specular reflections may require many more samples to converge in comparison to areas with just diffuse surfaces. To help render my final image, I decided to implement a very simple adaptive sampling method based on <a href="#ref13">[13]</a>. I followed the method described in the paper pretty closely and extended it as follows:<p>
+
+    <ul>
+        <li>use gamma correction and color clamping before computing the error metric</li>
+        <li>use minimum block size of 8x8 pixels and only allowing regions to be multiples of 8x8 pixels</li>
+        <li>progressive rendering by restarting the method with a smaller threshold every time convergence is reached</li>
+    </ul>
+
+    <p>The following comparisons show equal time renderings with and without adaptive sampling. Each iteration uses an error threshold half of the previous iteration. To better highlight the differences, the contrast of the images has been enhanced. The comparisons clearly show how the adaptive sampling method is able to render images with more uniform noise across the image, which is mostly visible in the caustic and the reflections of the sphere on the right. The last comparison shows the sampling distribution when using adaptive sampling, clearly indicating the focus on the regions that converge less quickly.</p>
+
+    <br>
+
+    <div class="twentytwenty-container">
+        <img src="images/adaptive-off-1.2m-hc.png" alt="Adaptive Off" class="img-responsive">
+        <img src="images/adaptive-on-1.2m-hc.png" alt="Adaptive On" class="img-responsive">
+    </div>
+    <p class="text-center">After 1.2 minutes (error threshold 0.004)</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/adaptive-off-4.0m-hc.png" alt="Adaptive Off" class="img-responsive">
+        <img src="images/adaptive-on-4.0m-hc.png" alt="Adaptive On" class="img-responsive">
+    </div>
+    <p class="text-center">After 4 minutes (error threshold 0.002)</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/adaptive-off-11.6m-hc.png" alt="Adaptive Off" class="img-responsive">
+        <img src="images/adaptive-on-11.6m-hc.png" alt="Adaptive On" class="img-responsive">
+    </div>
+    <p class="text-center">After 11.6 minutes (error threshold 0.001)</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/adaptive-weight-1.2m.png" alt="After 1.2 minutes" class="img-responsive">
+        <img src="images/adaptive-weight-4.0m.png" alt="After 4.0 minutes" class="img-responsive">
+    </div>
+    <p class="text-center">Sampling distribution when using adaptive sampling</p>
+
+    <h2 id="denoising">Denoising</h2>
+
+    <ul>
+        <li><code>include/nori/imagebuffer.h</code></li>
+        <li><code>include/nori/rendertarget.h</code></li>
+        <li><code>src/imagebuffer.cpp</code></li>
+        <li><code>src/rendertarget.cpp</code></li>
+    </ul>
+
+    <p>To further decrease the noise in the final image, I decided to implement a simple denoiser based on <a href="#ref13">[14]</a> and some own ideas. First, I extended the renderer to output some extra data, namely a variance buffer of the rendered color buffer as well as a few additional feature buffers, each with its own variance buffer. The additional features buffers consist of the albedo, normal and depth values. To simplify the generation of the render buffers, I removed the reconstruction filters and just used a simple box filter, which simplifies computation of the variance. The following shows an example of the additional outputs.</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/denoiser-color.png" alt="Color" class="img-responsive">
+        <img src="images/denoiser-color-variance.png" alt="Variance" class="img-responsive">
+    </div>
+    <p class="text-center">Color Buffer</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/denoiser-albedo.png" alt="Albedo" class="img-responsive">
+        <img src="images/denoiser-albedo-variance.png" alt="Variance" class="img-responsive">
+    </div>
+    <p class="text-center">Albedo Buffer</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/denoiser-normal.png" alt="Normal" class="img-responsive">
+        <img src="images/denoiser-normal-variance.png" alt="Variance" class="img-responsive">
+    </div>
+    <p class="text-center">Normal Buffer</p>
+
+    <div class="twentytwenty-container">
+        <img src="images/denoiser-depth.png" alt="Depth" class="img-responsive">
+        <img src="images/denoiser-depth-variance.png" alt="Variance" class="img-responsive">
+    </div>
+    <p class="text-center">Depth Buffer</p>
+
+    <p>In a first step, the denoiser removes fireflies by using a simple heuristic. If a pixel with high variance is only surrounded by pixels with much lower variance, it is marked as a firefly and replaced by taking the average of the surrounding pixels. By default a ratio of 100 is used to detect pixels with high variance. The following shows a before and after comparison.<p>
+
+    <div class="twentytwenty-container">
+        <img src="images/denoiser-color.png" alt="Before" class="img-responsive">
+        <img src="images/denoiser-firefly.png" alt="After" class="img-responsive">
+    </div>
+    <p class="text-center">Firefly filter (removing around 1000 fireflies)</p>
+
+    <p>Following the firefly removal, the denoiser uses the NL-means filtering approach described in <a href="#ref14">[14]</a>. While NL-means filtering works relatively well on simple scenes, I didn't used it for my final image. I wasen't able to get the results I was hoping for and the residual noise after removing fireflies was actually more pleasant then the denoised image.<p>
+
+    <div class="twentytwenty-container">
+        <img src="images/denoiser-firefly.png" alt="Before" class="img-responsive">
+        <img src="images/denoiser-denoised.png" alt="After" class="img-responsive">
+    </div>
+    <p class="text-center">NL-means filter</p>
+
+    <p>I also implemented image processing and tonemapping functionality into the denoiser, in order to avoid using any external software for producing the final image (other than scene authoring). I added some basic image processing such as exposure, saturation, color temperature adjustments and an additional tonemapper based on an analytic light response curve for Kodak film based on <a href="#ref15">[15]</a>.</p>
+
+    <h2 id="scenemodelling">Scene Modelling</h2>
+
+    <p>To create the scene for the final image, I used Blender to model the glasses, the simple scene geometry as well as using the fluid simulation to create the water splash. The plant was modeled by <em>Animated Heaven</em> and is taken from <a href="http://www.sharecg.com/v/79044/gallery/5/3D-Model/Plant-Model">www.sharecg.com</a>. The environment map was taken from <a href="http://www.openfootage.net/?p=135">www.openfootage.net</a>. To create the fire volume, I used the apprentice version of Houdini FX, using a simple Pyro FX setup and exporting a single frame of the simulation (density and temperature data) to an OpenVDB file following <a href="https://support.solidangle.com/display/AFHUG/Writing+Volumes+To+VDB">this article</a>. The following shows a few screen shots of the scene in Blender and Houdini FX:<p>
+
+    <br>
+
+    <div class="row">
+        <div class="col-md-6">
+            <a href="images/blender1.png"><img class="img-responsive" src="images/blender1.png" alt=""/></a>
+            <p class="text-center">Blender Screen shot 1</p>
+        </div>
+        <div class="col-md-6">
+            <a href="images/blender2.png"><img class="img-responsive" src="images/blender2.png" alt=""/></a>
+            <p class="text-center">Blender Screen shot 2</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <a href="images/houdini-fx1.png"><img class="img-responsive" src="images/houdini-fx1.png" alt=""/></a>
+            <p class="text-center">Houdini FX Screen shot 1</p>
+        </div>
+        <div class="col-md-6">
+            <a href="images/houdini-fx2.png"><img class="img-responsive" src="images/houdini-fx2.png" alt=""/></a>
+            <p class="text-center">Houdini FX Screen shot 2</p>
+        </div>
+    </div>
+
+    <h2 id="finalimage">Final Image</h2>
+
+    <p>The final image was rendered in 20 hours on an Intel Core-i7 at 1920x1080 resolution. There is a lot that could be optimized, but I was running out of time. Ironically, the adaptive sampler spent most of the samples on the dirt inside the second glass, which is the part of the image I dislike the most.<p>
+
+    <br>
+
+    <a href="images/final.png"><img class="img-responsive" src="images/final.png" alt=""/></a>
+    <p class="text-center">Final image</p>
+
+    <h2>References</h2>
+
+    <ul>
+    <li id="ref1">[1] <a href="http://blog.selfshadow.com/publications/s2012-shading-course/burley/s2012_pbs_disney_brdf_notes_v3.pdf">Physically Based Shading at Disney</a>
+    <li id="ref2">[2] <a href="http://www.shihchin.com/2015/07/implementing-disney-principled-brdf-in.html">Implementing Disney Principled BRDF in Arnold</a></li>
+    <li id="ref3">[3] <a href="https://github.com/wdas/brdf/blob/master/src/brdfs/disney.brdf">Disney BRDF Viewer</a></li>
+    <li id="ref4">[4] <a href="https://www.cs.utexas.edu/~fussell/courses/cs395t/lens.pdf">A Realistic Camera Model for Computer Graphics</a></li>
+    <li id="ref5">[5] <a href="http://www.cs.virginia.edu/~gfx/courses/2007/ImageSynthesis/assignments/envsample.pdf">Monte Carlo Rendering with Natural Illumination</a></li>
+    <li id="ref6">[6] <a href="https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf">Microfacet Models for Refraction through Rough Surfaces</a></li>
+    <li id="ref7">[7] <a href="http://www1.cs.columbia.edu/CAVE/publications/pdfs/Oren_SIGGRAPH94.pdf">Generalization of Lambert’s Reflectance Model</a></li>
+    <li id="ref8">[8] <a href="http://gruenschloss.org/">Sobol Sampler by Leonhard Grünschloß</a></li>
+    <li id="ref9">[9] <a href="http://magnuswrenninge.com/content/pubs/ProductionVolumeRenderingSystems2011.pdf">Production Volume Rendering</a></li>
+    <li id="ref10">[10] <a href="http://graphics.pixar.com/library/MISEmissive/paper.pdf">Multiple Importance Sampling for Emissive Effects</a></li>
+    <li id="ref11">[11] <a href="https://www.solidangle.com/research/egsr2012_volume.pdf">Importance Sampling Techniques for Path Tracing in Participating Media</a></li>
+    <li id="ref12">[12] <a href="https://en.wikipedia.org/wiki/Thin_lens">Wikipedia - Thin Lens</a></li>
+    <li id="ref13">[13] <a href="http://jo.dreggn.org/home/2009_stopping.pdf">A Hierarchical Automatic Stopping Condition for Monte Carlo Global Illumination</a></li>
+    <li id="ref14">[14] <a href="http://www.cgg.unibe.ch/publications/robust-denoising-using-feature-and-color-information">Robust Denoising using Feature and Color Information</a></li>
+    <li id="ref15">[15] <a href="http://iwasbeingirony.blogspot.ch/2010/04/approximating-film-with-tonemapping.html">Approximating Film with Tonemapping</a></li>
+    </ul>
+    <br><br>
+
+	<!-- ================================================================= -->
+</div>
+</div>
+
+
+<!-- Bootstrap core JavaScript -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="resources/bootstrap.min.js"></script>
+<script src="/js/offcanvas.js"></script>
+<script src="resources/jquery.event.move.js"></script>
+<script src="resources/jquery.twentytwenty.js"></script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script>
+$(window).load(function(){
+    $(".twentytwenty-container").twentytwenty({default_offset_pct: 0.5});
+    var shiftWindow = function() { scrollBy(0, -80); };
+    window.addEventListener("hashchange", shiftWindow);
+});
+</script>
+
+</body>
+</html>
