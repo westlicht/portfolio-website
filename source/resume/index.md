@@ -98,8 +98,8 @@ nav: resume
 
   <div class="section">Computer Skills</div><hr>
 
-  <div class="row"><div class="key">Languages</div><div class="value">C/C++11, x86 SIMD, GLSL, OpenCL, CUDA, Python, Ruby, Haskell</div></div>
-  <div class="row"><div class="key">Tools</div><div class="value">Git, Qt, Eclipse, CMake, Matlab, LaTeX</div></div>
+  <div class="row"><div class="key">Languages</div><div class="value">C/C++11, x86 SIMD, GLSL, OpenCL, CUDA, Python, JavaScript, Haskell</div></div>
+  <div class="row"><div class="key">Tools</div><div class="value">Git, Qt, CMake, Matlab, Mathematica, LaTeX</div></div>
   <div class="row"><div class="key">OS</div><div class="value">OSX, Linux, Windows</div></div>
 
   <div class="section">Interests and Projects</div><hr>

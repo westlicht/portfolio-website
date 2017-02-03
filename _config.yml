@@ -4,8 +4,7 @@
 
 # Site
 title: Simon Kallweit
-subtitle: Portfolio
-description:
+description: Simon Kallweit's Portfolio
 author: Simon Kallweit
 language: en
 timezone:
@@ -64,6 +63,28 @@ pagination_dir: page
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
 theme: portfolio
+
+# Autoprefixer
+autoprefixer:
+  exclude:
+    - "*.min.css"
+  browsers:
+    - "last 10 versions"
+
+# Optimization
+html_minifier:
+  enable: false
+css_minifier:
+  enable: false
+js_minifier:
+  enable: true
+image_minifier:
+  enable: false
+  interlaced: false
+  multipass: false
+  optimizationLevel: 2
+  pngquant: false
+  progressive: false
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html

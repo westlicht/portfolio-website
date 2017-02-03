@@ -1,5 +1,7 @@
 <section>
   <% site.posts.sort("date", "desc").each(function(item){ %>
-    <%- partial('_partial/project', {item: item}) %>
+    <% if (!item.draft) { %>
+      <%- partial('_partial/project', {item: item}) %>
+    <% } %>
   <% }); %>
 </section>

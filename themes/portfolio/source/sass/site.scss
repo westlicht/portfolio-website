@@ -7,7 +7,9 @@
 $color-background: #fff;
 $color-text: #000;
 
-$color-icon: #aaa;
+$color-gray: #aaa;
+
+$color-icon: $color-gray;
 
 $color-nav: #aaa;
 $color-nav-active: #000;
@@ -28,31 +30,7 @@ body {
 }
 
 img {
-  -webkit-box-shadow: 0px 0px 15px 0px rgba(0,0,0,0.25);
-  -moz-box-shadow: 0px 0px 15px 0px rgba(0,0,0,0.25);
   box-shadow: 0px 0px 15px 0px rgba(0,0,0,0.25);
-}
-
-/* Typography */
-
-// h1 {
-//   text-align: center;
-//   text-transform: uppercase;
-//   // font-size: 2em;
-//   // text-shadow: 0 2px 5px rgba(0,0,0,0.25);
-//   /*padding-bottom: 1em;*/
-// }
-//
-// h2,h3,h4,h5,h6 {
-//   text-align: center;
-// }
-
-// h1::first-letter {
-//   // font-size: 1.2em;
-// }
-
-.blocktext {
-  text-align: justify;
 }
 
 /* Lists */
@@ -79,7 +57,7 @@ li {
 header {
   padding-top: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 0.125rem solid $color-icon;
+  border-bottom: 0.125rem solid $color-gray;
 
   .wrapper {
     display: flex;
@@ -90,10 +68,18 @@ header {
   }
 
   .title {
+    color: $color-text;
     font-size: 3rem;
+    font-weight: normal;
     text-transform: uppercase;
     text-align: center;
     padding: 0 0.5rem;
+    user-select: none;
+    cursor: pointer;
+
+    &:hover {
+      color: $color-text;
+    }
   }
 
   .title::first-letter {
@@ -203,10 +189,12 @@ header {
 /* Footer */
 
 footer {
-  margin-top: 2em;
-  margin-bottom: 2em;
-  border-top: 0.125em solid black;
+  // margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding-top: 1rem;
+  border-top: 0.125rem solid $color-gray;
   text-align: center;
+  color: $color-gray;
 }
 
 /* Main */
@@ -221,18 +209,18 @@ main {
 
   // min-height: 200px;
 
+  h1,h2,h3,h4,h5,h6 {
+    text-align: center;
+  }
+
   .portrait {
     display: block;
     width: 100%;
-    max-width: 190px;
-
-    margin-right: 1rem;
-
-    // border-radius: 2rem;
+    box-shadow: none;
     margin-left: auto;
     margin-right: auto;
-
-    box-shadow: none;
+    margin-bottom: 2rem;
+    max-width: 300px;
   }
 
   p {
@@ -241,13 +229,18 @@ main {
 
 }
 
-@media (min-width: 550px) {
+@media (min-width: 750px) {
   .home {
+    h1,h2,h3,h4,h5,h6 {
+      text-align: left;
+    }
+
     .portrait {
-      float: right;
-      margin-left: 1rem;
-      margin-right: 0;
-      margin-top: 6rem;
+      margin-bottom: 0;
+      // float: left;
+      // margin-left: 1rem;
+      // margin-right: 2rem;
+      // margin-top: 6rem;
 
 
     }
@@ -257,12 +250,16 @@ main {
 /* Project */
 
 .project {
-  h2 {
+  h1,h2,h3,h4,h5,h6 {
     text-align: center;
   }
   p {
     text-align: center;
   }
+
+  // padding-bottom: 2rem;
+  margin-bottom: 4rem;
+  // border-bottom: 0.125rem solid lighten($color-gray, 50);
 
 }
 
