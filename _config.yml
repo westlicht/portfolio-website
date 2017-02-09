@@ -11,7 +11,7 @@ timezone:
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
-url: http://portfolio.westlicht.ch
+url: http://simon-kallweit.me
 root: /
 permalink: :title/
 permalink_defaults:
@@ -102,4 +102,5 @@ deploy:
   type: rsync
   host: belele.inthemill.ch
   user: freak
-  root: /var/www/westlicht.ch/portfolio
+  # root: /var/www/westlicht.ch/portfolio
+  root: /var/www/simon-kallweit.me/www
