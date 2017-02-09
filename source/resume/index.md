@@ -25,19 +25,13 @@ nav: resume
       Thesis: &ldquo;Learning High-Order Scattering in Rendering from Data&rdquo; Supervisor: Prof. Markus Gross
     </div>
   </div>
+
   <div class="row">
     <div class="key">09/20/2010 – 08/30/2013</div>
     <div class="value">
       <strong>BSc in Computer Science</strong>, <em>Swiss Federal Institute of Technology (ETH)</em>, Z&uuml;rich.<br>
       Major: Computational Science<br>
       Thesis: &ldquo;Photon Beam Methods in Rendering&rdquo; Supervisor: Prof. Markus Gross
-    </div>
-  </div>
-  <div class="row">
-    <div class="key">1997 – 2001</div>
-    <div class="value">
-      <strong>Matura</strong>, <em>Gymnasium Oberaargau</em>, Langenthal.<br>
-      Thesis: &ldquo;Computer Simulation of Dynamics and Kinematics of Rigid Bodies&rdquo;
     </div>
   </div>
 
@@ -56,6 +50,7 @@ nav: resume
       </ul>
     </div>
   </div>
+
   <div class="row">
     <div class="key">06/30/2014 – 08/22/2014</div>
     <div class="value">
@@ -66,6 +61,7 @@ nav: resume
       </ul>
     </div>
   </div>
+
   <div class="row">
     <div class="key">06/01/2008 – 12/16/2011</div>
     <div class="value">
@@ -73,6 +69,7 @@ nav: resume
       Development lead for a commercial localization platform based on GSM/GPS technology. Contributions to the open-source real-time operating system eCos.      
     </div>
   </div>
+
   <div class="row">
     <div class="key">11/01/2001 – 03/31/2008</div>
     <div class="value">
