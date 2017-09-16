@@ -31,6 +31,19 @@ hexo.extend.tag.register('youtube', function(args) {
   return text
 });
 
+hexo.extend.tag.register('video', function(args) {
+  url = args[0]
+  type = args[1]
+  if (type === undefined) {
+    type = 'video/mp4';
+  }
+  text = '<video style="width: 100%;" controls="controls">'
+  text += '<source src="' + url + '" type="' + type + '"/>'
+  text += '<p>Your browser cannot play this video. Please download the <a href="' + url + '">video</a> manually.</p>'
+  text += '</video>'
+  return text
+});
+
 
 hexo.extend.helper.register('teaser_image_path', function(item) {
   // return item.path + item.path.replace(/\/$/, "") + '.jpg';
