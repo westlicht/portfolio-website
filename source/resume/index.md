@@ -38,6 +38,36 @@ nav: resume
   <div class="section">Work Experience</div><hr>
 
   <div class="row">
+    <div class="key">07/03/2017 – present</div>
+    <div class="value">
+      <strong>Software Engineer</strong>, <em>Esri R&amp;D Center</em>, Z&uuml;rich.<br>
+      Working as a core developer on the <em>ArcGIS API for JavaScript</em> platform:
+      <ul>
+        <li>Improving the WebGL based rendering engine</li>
+        <li>Design and implementation of various interactive tools for measuring features on maps</li>
+        <li>General development work</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="key">03/01/2017 – 06/09/2017</div>
+    <div class="value">
+      <strong>Intern</strong>, <em>Disney Research Z&uuml;rich</em>, Z&uuml;rich.<br>
+      Worked on <em>Deep Scattering: Rendering Atmospheric Clouds with Radiance-Predicting Neural Networks</em> publication for SIGGRAPH Asia 2017.
+    </div>
+  </div>
+
+
+  <div class="row">
+    <div class="key">11/14/2016 – 02/24/2017</div>
+    <div class="value">
+      <strong>Software Engineer</strong>, <em>Freelancer</em><br>
+      Worked on various software projects, most notably developed a custom web presence for <em>swiss-PVD Coating AG</em>.
+    </div>
+  </div>
+
+  <div class="row">
     <div class="key">09/02/2014 – 01/16/2015</div>
     <div class="value">
       <strong>Technology Intern</strong>, <em>Walt Disney Animation Studios</em>, Burbank, CA.<br>
@@ -77,6 +107,10 @@ nav: resume
       Responsible for analysis, design, implementation, testing and maintenance of software systems. Worked in multiple fields, including user interfaces, server applications and embedded systems in both Windows- and Linux-based environments.    
     </div>
   </div>
+
+  <div class="section">Publications</div><hr>
+  
+  <div class="row"><div class="key">2017</div><div class="value"><em>Deep Scattering: Rendering Atmospheric Clouds with Radiance-Predicting Neural Networks</em>, Simon Kallweit, Thomas M&uuml;ller, Brian McWilliams, Markus Gross, Jan Nov&aacute;k, Proceedings of SIGGRAPH Asia 2017</div></div>
 
   <div class="section">Awards</div><hr>
 
